@@ -1,8 +1,11 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+
 import MainLayout from './components/layout/MainLayout'
 import AnimationCanvas from './features/powerlifting/components/AnimationCanvas'
 import ControlPanel from './features/powerlifting/components/ControlPanel'
 import { useKinematics } from './features/powerlifting/hooks/useKinematics'
+import { useLiftAnimation } from './features/powerlifting/hooks/useLiftAnimation'
+
 import { liftData } from './features/powerlifting/lib/liftData.js'
 
 const LIFT_OPTIONS = Object.keys(liftData)
@@ -15,19 +18,57 @@ const App = () => {
     [selectedLift],
   )
 
-  const {
-    joints,
-    limbs,
-    barPosition,
-    barOffset,
-    torque,
-    root,
-    rootPosition,
-    angles,
-    setJointOffset,
-    resetAngles,
-    setBarOffset,
-  } = useKinematics({ liftType: selectedLift })
+  const [manualOffsets, setManualOffsets] = useState({})
+  const [manualBarOffset, setManualBarOffset] = useState({ x: 0, y: 0 })
+
+  useEffect(() => {
+    setManualOffsets({})
+    setManualBarOffset({ x: 0, y: 0 })
+  }, [selectedLift])
+
+  const { joints: animatedOffsets, barOffset: animatedBarOffset, isPlaying, togglePlay, tempo, setTempo, progress, phase } =
+    useLiftAnimation({ liftType: selectedLift })
+
+  const combinedOverrides = useMemo(() => {
+    const overrides = {}
+    const jointKeys = new Set([...Object.keys(animatedOffsets ?? {}), ...Object.keys(manualOffsets ?? {})])
+    jointKeys.forEach((joint) => {
+      const totalDegrees = (animatedOffsets?.[joint] ?? 0) + (manualOffsets?.[joint] ?? 0)
+      overrides[joint] = { angleOffset: (totalDegrees * Math.PI) / 180 }
+    })
+
+    const totalBarOffset = {
+      x: (animatedBarOffset?.x ?? 0) + (manualBarOffset?.x ?? 0),
+      y: (animatedBarOffset?.y ?? 0) + (manualBarOffset?.y ?? 0),
+    }
+
+    return {
+      ...overrides,
+      bar: { offset: totalBarOffset },
+    }
+  }, [animatedBarOffset, animatedOffsets, manualBarOffset, manualOffsets])
+
+  const handleAngleOffsetChange = (joint, value) => {
+    setManualOffsets((current) => ({
+      ...current,
+      [joint]: value,
+    }))
+  }
+
+  const handleResetAdjustments = () => {
+    setManualOffsets({})
+    setManualBarOffset({ x: 0, y: 0 })
+  }
+
+  const handleBarOffsetChange = (next) => {
+    setManualBarOffset((current) => ({ ...current, ...next }))
+  }
+
+  const { joints, limbs, barPosition, torque, root, rootPosition, angles } = useKinematics({
+    liftType: selectedLift,
+    jointOverrides: combinedOverrides,
+  })
+
 
   const layoutControls = (
     <div className="flex items-center gap-3 text-xs uppercase tracking-[0.3em] text-zinc-500">
@@ -45,10 +86,16 @@ const App = () => {
         onSelectLift={setSelectedLift}
         torque={torque}
         angles={angles}
-        onAngleOffsetChange={setJointOffset}
-        onResetAngles={resetAngles}
-        onBarOffsetChange={setBarOffset}
-        barOffset={barOffset}
+        manualOffsets={manualOffsets}
+        onAngleOffsetChange={handleAngleOffsetChange}
+        onResetAngles={handleResetAdjustments}
+        onBarOffsetChange={handleBarOffsetChange}
+        barOffset={manualBarOffset}
+        isPlaying={isPlaying}
+        onTogglePlay={togglePlay}
+        tempo={tempo}
+        onTempoChange={setTempo}
+        phaseLabel={phase}
       />
     }>
       <div className="grid gap-6 lg:grid-cols-2">
@@ -60,6 +107,8 @@ const App = () => {
           variant="side"
           rootPosition={rootPosition ?? joints?.[root]}
           torque={torque}
+          progress={progress}
+          phase={phase}
         />
         <AnimationCanvas
           title={`${selectedLift} structure`}
@@ -69,6 +118,9 @@ const App = () => {
           variant="front"
           rootPosition={rootPosition ?? joints?.[root]}
           torque={torque}
+          progress={progress}
+          phase={phase}
+
         />
       </div>
       <section className="rounded-md border border-zinc-800 bg-zinc-900/50 p-6 text-sm leading-relaxed text-zinc-300 shadow-[0_0_0_1px_rgba(255,255,255,0.08)]">

@@ -36,6 +36,9 @@ const AnimationCanvas = ({
   variant = 'side',
   rootPosition,
   torque,
+  progress = 0,
+  phase,
+
 }) => {
   const anchorX = rootPosition?.x ?? CANVAS_WIDTH / 2
 
@@ -63,6 +66,11 @@ const AnimationCanvas = ({
           <p className="text-xs uppercase tracking-[0.2em] text-zinc-400">{variant} view</p>
           <h2 className="text-lg font-semibold text-zinc-100">{title}</h2>
         </div>
+        <div className="text-right text-[11px] leading-tight text-zinc-400">
+          <p className="uppercase tracking-[0.3em]">{phase ?? 'Cycle'}</p>
+          <p className="text-zinc-200">{Math.round((progress ?? 0) * 100)}%</p>
+        </div>
+
         {torque && (
           <dl className="text-right text-xs text-zinc-400">
             <dt className="uppercase tracking-[0.2em]">total torque</dt>

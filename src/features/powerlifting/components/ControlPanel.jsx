@@ -4,10 +4,16 @@ const ControlPanel = ({
   onSelectLift,
   torque,
   angles,
+  manualOffsets,
   onAngleOffsetChange,
   onResetAngles,
   onBarOffsetChange,
   barOffset,
+  isPlaying,
+  onTogglePlay,
+  tempo,
+  onTempoChange,
+  phaseLabel,
 }) => {
   const torqueEntries = torque ? Object.entries(torque.perJoint) : []
   const angleEntries = angles ? Object.entries(angles) : []
@@ -15,6 +21,38 @@ const ControlPanel = ({
   return (
     <div className="flex h-full flex-col gap-6 rounded-md border border-zinc-700/80 bg-zinc-900/40 p-6 shadow-[0_0_0_1px_rgba(255,255,255,0.08)]">
       <section className="space-y-3">
+        <header className="flex items-center justify-between">
+          <div>
+            <p className="text-xs uppercase tracking-[0.3em] text-zinc-500">Playback</p>
+            <p className="text-[11px] text-zinc-400">{phaseLabel ?? 'Continuous cycle'}</p>
+          </div>
+          <button
+            type="button"
+            onClick={onTogglePlay}
+            className="rounded-sm border border-zinc-600 px-3 py-1 text-[11px] uppercase tracking-[0.25em] text-zinc-200 hover:border-zinc-400"
+          >
+            {isPlaying ? 'Pause' : 'Play'}
+          </button>
+        </header>
+        <div className="space-y-2">
+          <label className="block space-y-1 text-[11px] text-zinc-300">
+            <span className="uppercase tracking-[0.2em] text-zinc-500">Tempo</span>
+            <input
+              type="range"
+              min={0.5}
+              max={1.5}
+              step={0.05}
+              value={Number(tempo)}
+              onChange={(event) => onTempoChange(Number(event.target.value))}
+              className="w-full accent-zinc-50"
+            />
+          </label>
+          <p className="text-[11px] text-zinc-500">Cadence → {tempo.toFixed(2)}x base cycle speed.</p>
+        </div>
+      </section>
+
+      <section className="space-y-3">
+
         <p className="text-xs uppercase tracking-[0.3em] text-zinc-500">Select lift</p>
         <div className="flex flex-wrap gap-2">
           {lifts.map((lift) => (
@@ -42,6 +80,7 @@ const ControlPanel = ({
           <div>
             <p className="text-xs uppercase tracking-[0.3em] text-zinc-500">Joint tuning</p>
             <p className="text-[11px] text-zinc-400">Adjust offsets to explore different positions.</p>
+            <p className="text-[11px] text-zinc-500">Values layer on top of the animated cycle, comrade.</p>
           </div>
           <button
             type="button"
@@ -52,7 +91,8 @@ const ControlPanel = ({
           </button>
         </header>
         <div className="space-y-3">
-          {angleEntries.map(([joint, { offset, absolute }]) => (
+
+          {angleEntries.map(([joint, { absolute }]) => (
             <div key={joint} className="space-y-1">
               <div className="flex items-baseline justify-between text-xs uppercase tracking-[0.2em] text-zinc-400">
                 <span>{joint}</span>
@@ -63,7 +103,7 @@ const ControlPanel = ({
                 min={-45}
                 max={45}
                 step={1}
-                value={Number(offset)}
+                value={Number(manualOffsets?.[joint] ?? 0)}
                 onChange={(event) => onAngleOffsetChange(joint, Number(event.target.value))}
                 className="w-full accent-zinc-50"
               />
