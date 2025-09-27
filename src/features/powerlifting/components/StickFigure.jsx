@@ -3,6 +3,10 @@ const StickFigure = ({ joints, limbs, nodeRadius = 6, strokeWidth = 3, accentJoi
     return null
   }
 
+  const accentLookup = Array.isArray(accentJoint)
+    ? new Set(accentJoint)
+    : accentJoint
+
   return (
     <g>
       {limbs.map(({ from, to }) => {
@@ -29,7 +33,15 @@ const StickFigure = ({ joints, limbs, nodeRadius = 6, strokeWidth = 3, accentJoi
           cx={point.x}
           cy={point.y}
           r={nodeRadius}
-          className={key === accentJoint ? 'fill-zinc-50' : 'fill-current'}
+          className={
+            accentLookup instanceof Set
+              ? accentLookup.has(key)
+                ? 'fill-zinc-50'
+                : 'fill-current'
+              : key === accentLookup
+                ? 'fill-zinc-50'
+                : 'fill-current'
+          }
         />
       ))}
     </g>
