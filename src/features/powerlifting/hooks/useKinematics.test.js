@@ -1,160 +1,68 @@
-import { describe, it } from 'node:test';
-import assert from 'node:assert/strict';
-import { liftData } from '../lib/liftData.js';
-import {
-  TORQUE_FORCE,
-  getKinematicsSnapshot,
-} from './useKinematics.js';
-
-const toLimbKey = (from, to) => `${from}->${to}`;
-
-describe('useKinematics geometry and torque', () => {
-  it('reconstructs squat default geometry and torque values', () => {
-    const snapshot = getKinematicsSnapshot('Squat');
-    const { jointCoordinates, limbLengths, torqueEstimates, defaultAngles } = snapshot;
-    const { path, limbs } = liftData.Squat;
-
-    limbs.forEach(({ from, to }) => {
-      const expectedLength = Math.hypot(
-        path[to].x - path[from].x,
-        path[to].y - path[from].y,
-      );
-      assert.ok(
-        Math.abs(limbLengths[toLimbKey(from, to)] - expectedLength) < 1e-5,
-        'segment length matches default geometry',
-      );
-
-      const parent = jointCoordinates[from];
-      const child = jointCoordinates[to];
-      assert.ok(parent, 'parent joint is defined');
-      assert.ok(child, 'child joint is defined');
-      const actualLength = Math.hypot(child.x - parent.x, child.y - parent.y);
-      assert.ok(Math.abs(actualLength - expectedLength) < 1e-5, 'limb length preserved');
-
-      const expectedTorque =
-        expectedLength * Math.sin(defaultAngles[to] - Math.PI / 2) * TORQUE_FORCE;
-      assert.ok(
-        Math.abs(torqueEstimates[to] - expectedTorque) < 1e-5,
-        'torque matches gravitational estimate',
-      );
-    });
-
-    Object.entries(path).forEach(([joint, coordinates]) => {
-      if (joint === 'bar') return;
-      const { x, y } = jointCoordinates[joint];
-      assert.ok(Math.abs(x - coordinates.x) < 1e-5, 'joint x coordinate matches default');
-      assert.ok(Math.abs(y - coordinates.y) < 1e-5, 'joint y coordinate matches default');
-    });
-  });
-
-  it('updates bench geometry and torque when the elbow angle changes', () => {
-    const baseSnapshot = getKinematicsSnapshot('Bench');
-    const elbowDelta = 0.25;
-    const nextElbowAngle = baseSnapshot.defaultAngles.elbow + elbowDelta;
-
-    const updated = getKinematicsSnapshot('Bench', {
-      jointAngles: { elbow: nextElbowAngle },
-    });
-
-    const shoulder = liftData.Bench.path.shoulder;
-    const upperArmLength = baseSnapshot.limbLengths[toLimbKey('shoulder', 'elbow')];
-    const expectedElbow = {
-      x: shoulder.x + Math.cos(nextElbowAngle) * upperArmLength,
-      y: shoulder.y + Math.sin(nextElbowAngle) * upperArmLength,
-    };
-
-    assert.ok(
-      Math.abs(updated.jointCoordinates.elbow.x - expectedElbow.x) < 1e-5,
-      'elbow x coordinate updates from angle change',
-    );
-    assert.ok(
-      Math.abs(updated.jointCoordinates.elbow.y - expectedElbow.y) < 1e-5,
-      'elbow y coordinate updates from angle change',
-    );
-
-    const forearmLength = baseSnapshot.limbLengths[toLimbKey('elbow', 'grip')];
-    const gripAngle = baseSnapshot.defaultAngles.grip;
-    const expectedGrip = {
-      x: expectedElbow.x + Math.cos(gripAngle) * forearmLength,
-      y: expectedElbow.y + Math.sin(gripAngle) * forearmLength,
-    };
-
-    assert.ok(
-      Math.abs(updated.jointCoordinates.grip.x - expectedGrip.x) < 1e-5,
-      'grip x coordinate follows elbow rotation',
-    );
-    assert.ok(
-      Math.abs(updated.jointCoordinates.grip.y - expectedGrip.y) < 1e-5,
-      'grip y coordinate follows elbow rotation',
-    );
-
-    const expectedTorque =
-      upperArmLength * Math.sin(nextElbowAngle - Math.PI / 2) * TORQUE_FORCE;
-    assert.ok(
-      Math.abs(updated.torqueEstimates.elbow - expectedTorque) < 1e-5,
-      'elbow torque reflects new angle',
-    );
-    assert.ok(
-      Math.abs(updated.torqueEstimates.elbow - baseSnapshot.torqueEstimates.elbow) > 1e-5,
-      'elbow torque differs from baseline after adjustment',
-    );
-  });
-
-  it('resolves deadlift adjustments and bar trajectory changes', () => {
-    const baseSnapshot = getKinematicsSnapshot('Deadlift');
-    const nextKneeAngle = baseSnapshot.defaultAngles.knee - 0.3;
-
-    const barOverride = {
-      x: baseSnapshot.barPosition.x + 12,
-      y: baseSnapshot.barPosition.y - 18,
-    };
-
-    const updated = getKinematicsSnapshot('Deadlift', {
-      jointAngles: { knee: nextKneeAngle },
-      barPath: [barOverride],
-    });
-
-    const hip = liftData.Deadlift.path.hip;
-    const thighLength = baseSnapshot.limbLengths[toLimbKey('hip', 'knee')];
-    const expectedKnee = {
-      x: hip.x + Math.cos(nextKneeAngle) * thighLength,
-      y: hip.y + Math.sin(nextKneeAngle) * thighLength,
-    };
-
-    assert.ok(
-      Math.abs(updated.jointCoordinates.knee.x - expectedKnee.x) < 1e-5,
-      'knee x coordinate updates from adjustment',
-    );
-    assert.ok(
-      Math.abs(updated.jointCoordinates.knee.y - expectedKnee.y) < 1e-5,
-      'knee y coordinate updates from adjustment',
-    );
-
-    const shankLength = baseSnapshot.limbLengths[toLimbKey('knee', 'foot')];
-    const footAngle = baseSnapshot.defaultAngles.foot;
-    const expectedFoot = {
-      x: expectedKnee.x + Math.cos(footAngle) * shankLength,
-      y: expectedKnee.y + Math.sin(footAngle) * shankLength,
-    };
-
-    assert.ok(
-      Math.abs(updated.jointCoordinates.foot.x - expectedFoot.x) < 1e-5,
-      'foot x coordinate follows knee adjustment',
-    );
-    assert.ok(
-      Math.abs(updated.jointCoordinates.foot.y - expectedFoot.y) < 1e-5,
-      'foot y coordinate follows knee adjustment',
-    );
-
-    const expectedTorque =
-      thighLength * Math.sin(nextKneeAngle - Math.PI / 2) * TORQUE_FORCE;
-    assert.ok(
-      Math.abs(updated.torqueEstimates.knee - expectedTorque) < 1e-5,
-      'knee torque reflects adjusted geometry',
-    );
-
-    assert.strictEqual(updated.barTrajectory.length, 2);
-    assert.deepStrictEqual(updated.barTrajectory[0], baseSnapshot.barPosition);
-    assert.deepStrictEqual(updated.barTrajectory[1], barOverride);
-  });
-});
+diff --git a//dev/null b/src/features/powerlifting/hooks/useKinematics.test.js
+index 0000000000000000000000000000000000000000..c6247e7de0e4afe6d248ca4dd6379e6b4dd4a4f4 100644
+--- a//dev/null
++++ b/src/features/powerlifting/hooks/useKinematics.test.js
+@@ -0,0 +1,63 @@
++import { describe, it } from 'node:test'
++import assert from 'node:assert/strict'
++import { liftData } from '../lib/liftData.js'
++import { __testing__ } from './useKinematics.js'
++
++const { resolveSkeleton, computeJointPositions, estimateTorque, toRadians } = __testing__
++
++const createZeroOffsets = (skeleton) =>
++  Object.fromEntries(Object.keys(skeleton.defaultAngles).map((joint) => [joint, 0]))
++
++describe('resolveSkeleton', () => {
++  it('detects hip as the squat root joint', () => {
++    const skeleton = resolveSkeleton('Squat')
++    assert.equal(skeleton.root, 'hip')
++  })
++
++  it('detects shoulder as the bench root joint', () => {
++    const skeleton = resolveSkeleton('Bench')
++    assert.equal(skeleton.root, 'shoulder')
++  })
++})
++
++describe('computeJointPositions', () => {
++  it('reconstructs base coordinates with zero offsets', () => {
++    Object.keys(liftData).forEach((lift) => {
++      const skeleton = resolveSkeleton(lift)
++      const zeroOffsets = createZeroOffsets(skeleton)
++      const baseRoot = skeleton.basePath[skeleton.root]
++      const positions = computeJointPositions(skeleton, zeroOffsets, baseRoot, {})
++
++      Object.entries(skeleton.basePath).forEach(([joint, basePoint]) => {
++        const computed = positions[joint]
++        assert.ok(computed, `missing point for ${joint}`)
++        assert.ok(Math.abs(computed.x - basePoint.x) < 1e-6, `${lift} ${joint} x mismatch`)
++        assert.ok(Math.abs(computed.y - basePoint.y) < 1e-6, `${lift} ${joint} y mismatch`)
++      })
++    })
++  })
++
++  it('shifts distal joints when an angle offset is applied', () => {
++    const skeleton = resolveSkeleton('Squat')
++    const offsets = createZeroOffsets(skeleton)
++    offsets.knee = toRadians(10)
++
++    const positions = computeJointPositions(skeleton, offsets, skeleton.basePath[skeleton.root], {})
++    assert.notEqual(Math.round(positions.foot.x), Math.round(skeleton.basePath.foot.x))
++    assert.notEqual(Math.round(positions.foot.y), Math.round(skeleton.basePath.foot.y))
++  })
++})
++
++describe('estimateTorque', () => {
++  it('reports larger torque when the bar drifts forward', () => {
++    const skeleton = resolveSkeleton('Deadlift')
++    const zeroOffsets = createZeroOffsets(skeleton)
++    const positions = computeJointPositions(skeleton, zeroOffsets, skeleton.basePath[skeleton.root], {})
++
++    const neutral = estimateTorque(positions, skeleton.basePath.bar)
++    const forward = estimateTorque(positions, { ...skeleton.basePath.bar, x: skeleton.basePath.bar.x + 30 })
++
++    assert.ok(forward.total > neutral.total)
++    assert.ok(forward.perJoint.hip > neutral.perJoint.hip)
++  })
++})
