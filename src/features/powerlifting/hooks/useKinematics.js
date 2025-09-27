@@ -1,3 +1,4 @@
+
 import { useMemo } from 'react'
 import { liftData } from '../lib/liftData.js'
 

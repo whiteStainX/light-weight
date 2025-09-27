@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
+
 import MainLayout from './components/layout/MainLayout'
 import AnimationCanvas from './features/powerlifting/components/AnimationCanvas'
 import ControlPanel from './features/powerlifting/components/ControlPanel'
 import { useKinematics } from './features/powerlifting/hooks/useKinematics'
 import { useLiftAnimation } from './features/powerlifting/hooks/useLiftAnimation'
+
 import { liftData } from './features/powerlifting/lib/liftData.js'
 
 const LIFT_OPTIONS = Object.keys(liftData)
@@ -67,6 +69,7 @@ const App = () => {
     jointOverrides: combinedOverrides,
   })
 
+
   const layoutControls = (
     <div className="flex items-center gap-3 text-xs uppercase tracking-[0.3em] text-zinc-500">
       <span className="text-zinc-300">Active lift →</span>
@@ -117,6 +120,7 @@ const App = () => {
           torque={torque}
           progress={progress}
           phase={phase}
+
         />
       </div>
       <section className="rounded-md border border-zinc-800 bg-zinc-900/50 p-6 text-sm leading-relaxed text-zinc-300 shadow-[0_0_0_1px_rgba(255,255,255,0.08)]">

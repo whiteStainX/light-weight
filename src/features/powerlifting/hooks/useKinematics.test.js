@@ -45,6 +45,7 @@ describe('computeJointPositions', () => {
     const positions = computeJointPositions(skeleton, offsets, skeleton.basePath[skeleton.root], {})
     assert.notEqual(Math.round(positions.foot.x), Math.round(skeleton.basePath.foot.x))
     assert.notEqual(Math.round(positions.foot.y), Math.round(skeleton.basePath.foot.y))
+
   })
 })
 
@@ -56,6 +57,7 @@ describe('estimateTorque', () => {
 
     const neutral = estimateTorque(positions, skeleton.basePath.bar)
     const forward = estimateTorque(positions, { ...skeleton.basePath.bar, x: skeleton.basePath.bar.x + 30 })
+
 
     assert.ok(forward.total > neutral.total)
     assert.ok(forward.perJoint.hip > neutral.perJoint.hip)

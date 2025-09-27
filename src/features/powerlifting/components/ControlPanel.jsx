@@ -52,6 +52,7 @@ const ControlPanel = ({
       </section>
 
       <section className="space-y-3">
+
         <p className="text-xs uppercase tracking-[0.3em] text-zinc-500">Select lift</p>
         <div className="flex flex-wrap gap-2">
           {lifts.map((lift) => (
@@ -90,6 +91,7 @@ const ControlPanel = ({
           </button>
         </header>
         <div className="space-y-3">
+
           {angleEntries.map(([joint, { absolute }]) => (
             <div key={joint} className="space-y-1">
               <div className="flex items-baseline justify-between text-xs uppercase tracking-[0.2em] text-zinc-400">
