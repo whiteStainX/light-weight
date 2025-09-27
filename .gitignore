@@ -24,4 +24,4 @@ dist-ssr
 *.sw?
 
 # Design files
-/public/@design.png
+design*
