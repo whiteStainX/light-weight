@@ -7,7 +7,7 @@ const toDegrees = (radians) => (radians * 180) / Math.PI
 
 const resolveSkeleton = (liftType) => {
   const data = liftData[liftType] ?? liftData.Squat
-  const { limbs, path } = data
+  const { limbs, path, anchors = {}, surfaces = {}, frontProfile = {} } = data
   const parentMap = {}
   const childrenMap = new Map()
   const segmentLengths = {}
@@ -39,6 +39,9 @@ const resolveSkeleton = (liftType) => {
     segmentLengths,
     defaultAngles,
     root,
+    anchors,
+    surfaces,
+    frontProfile,
   }
 }
 
@@ -148,7 +151,24 @@ export const useKinematics = ({ liftType = 'Squat', jointOverrides = {} } = {}) 
     [angleOffsets, jointOverrides, rootPosition, skeleton],
   )
 
-  const barBase = skeleton.basePath.bar ?? { x: rootPosition.x, y: rootPosition.y }
+  const barBase = useMemo(() => {
+    const anchorConfig = skeleton.anchors?.bar
+    if (anchorConfig?.joint && joints?.[anchorConfig.joint]) {
+      const anchorPoint = joints[anchorConfig.joint]
+      const offset = anchorConfig.offset ?? { x: 0, y: 0 }
+      return {
+        x: anchorPoint.x + (offset.x ?? 0),
+        y: anchorPoint.y + (offset.y ?? 0),
+      }
+    }
+
+    if (skeleton.basePath.bar) {
+      return { ...skeleton.basePath.bar }
+    }
+
+    return { x: rootPosition.x, y: rootPosition.y }
+  }, [joints, rootPosition.x, rootPosition.y, skeleton.anchors?.bar, skeleton.basePath.bar])
+
   const barPosition = useMemo(
     () => ({
       x: barBase.x + (barOffset.x ?? 0),
@@ -182,5 +202,7 @@ export const useKinematics = ({ liftType = 'Squat', jointOverrides = {} } = {}) 
     rootPosition,
     angleOffsets,
     angles,
+    surfaces: skeleton.surfaces,
+    frontProfile: skeleton.frontProfile,
   }
 }

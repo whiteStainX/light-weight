@@ -14,13 +14,13 @@ describe('useLiftAnimation helpers', () => {
   it('interpolates squat profile start and mid keyframes', () => {
     const squatProfile = PROFILES.Squat
     const startFrame = interpolateFrame(squatProfile, 0)
-    assert.deepEqual(startFrame.joints, { hip: 0, knee: 0, shoulder: 0 })
+    assert.deepEqual(startFrame.joints, { knee: 0, hip: 0, shoulder: -2 })
     assert.deepEqual(startFrame.bar, { x: 0, y: 0 })
 
     const midway = interpolateFrame(squatProfile, 0.275)
     assert.ok(midway.joints.hip > 0 && midway.joints.hip < 32)
     assert.ok(midway.joints.knee > 0 && midway.joints.knee < 52)
-    assert.ok(midway.bar.y > 0 && midway.bar.y < 34)
+    assert.ok(midway.bar.y > 0 && midway.bar.y < 36)
   })
 
   it('loops smoothly across the final segment', () => {

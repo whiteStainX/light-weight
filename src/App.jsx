@@ -64,7 +64,7 @@ const App = () => {
     setManualBarOffset((current) => ({ ...current, ...next }))
   }
 
-  const { joints, limbs, barPosition, torque, root, rootPosition, angles } = useKinematics({
+  const { joints, limbs, barPosition, torque, root, rootPosition, angles, surfaces, frontProfile } = useKinematics({
     liftType: selectedLift,
     jointOverrides: combinedOverrides,
   })
@@ -109,6 +109,9 @@ const App = () => {
           torque={torque}
           progress={progress}
           phase={phase}
+          surfaces={surfaces}
+          angles={angles}
+          frontProfile={frontProfile}
         />
         <AnimationCanvas
           title={`${selectedLift} structure`}
@@ -120,7 +123,9 @@ const App = () => {
           torque={torque}
           progress={progress}
           phase={phase}
-
+          surfaces={surfaces}
+          angles={angles}
+          frontProfile={frontProfile}
         />
       </div>
       <section className="rounded-md border border-zinc-800 bg-zinc-900/50 p-6 text-sm leading-relaxed text-zinc-300 shadow-[0_0_0_1px_rgba(255,255,255,0.08)]">
