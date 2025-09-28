@@ -386,6 +386,7 @@ const AnimationCanvas = ({
             <span className="block h-full bg-black" style={{ width: `${Math.round((progress ?? 0) * 100)}%` }} />
           </span>
           <span className="flex-shrink-0">Progress</span>
+        </div>
       </footer>
     </div>
   )
