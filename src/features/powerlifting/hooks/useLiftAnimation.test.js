@@ -1,35 +1,67 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
+
 import { __testing__ } from './useLiftAnimation.js'
 
-const { PROFILES, interpolateFrame, normaliseProgress } = __testing__
+const {
+  cycleScalar,
+  cycleDirection,
+  solveSquat,
+  solveBench,
+  solveDeadlift,
+  buildSkeletonInfo,
+  computeJointOffsets,
+  normaliseProgress,
+} = __testing__
 
-describe('useLiftAnimation helpers', () => {
+describe('useLiftAnimation motion solvers', () => {
   it('normalises progress into a 0-1 range', () => {
     assert.equal(normaliseProgress(0), 0)
     assert.ok(Math.abs(normaliseProgress(1.2) - 0.2) < 1e-9)
     assert.ok(Math.abs(normaliseProgress(-0.25) - 0.75) < 1e-9)
   })
 
-  it('interpolates squat profile start and mid keyframes', () => {
-    const squatProfile = PROFILES.Squat
-    const startFrame = interpolateFrame(squatProfile, 0)
-    assert.deepEqual(startFrame.joints, { hip: 0, knee: 0, shoulder: 0 })
-    assert.deepEqual(startFrame.bar, { x: 0, y: 0 })
-
-    const midway = interpolateFrame(squatProfile, 0.275)
-    assert.ok(midway.joints.hip > 0 && midway.joints.hip < 32)
-    assert.ok(midway.joints.knee > 0 && midway.joints.knee < 52)
-    assert.ok(midway.bar.y > 0 && midway.bar.y < 34)
+  it('returns a smooth cosine-driven cycle', () => {
+    assert.equal(cycleScalar(0), 0)
+    assert.ok(cycleScalar(0.5) > 0.99)
+    assert.equal(Math.round(cycleDirection(0.25)), 1)
+    assert.equal(Math.round(cycleDirection(0.75)), -1)
   })
 
-  it('loops smoothly across the final segment', () => {
-    const deadliftProfile = PROFILES.Deadlift
-    const nearEnd = interpolateFrame(deadliftProfile, 0.99)
-    const wrap = interpolateFrame(deadliftProfile, 1.01)
+  it('keeps the squat bar stacked over the mid-foot', () => {
+    const base = solveSquat(0)
+    const depth = solveSquat(0.5)
 
-    assert.ok(Math.abs(nearEnd.joints.hip - wrap.joints.hip) < 5)
-    assert.ok(Math.abs(nearEnd.bar.y - wrap.bar.y) < 5)
+    assert.equal(Math.round(base.positions.foot.x), Math.round(depth.positions.foot.x))
+    assert.equal(Math.round(base.bar.x), Math.round(depth.bar.x))
+    assert.ok(depth.positions.knee.y > depth.positions.hip.y)
+  })
+
+  it('keeps the bench press bar path vertical', () => {
+    const touch = solveBench(0)
+    const lockout = solveBench(0.5)
+
+    assert.equal(Math.round(touch.bar.x), Math.round(lockout.bar.x))
+    assert.ok(touch.bar.y > lockout.bar.y)
+  })
+
+  it('keeps the deadlift grip centred on the bar', () => {
+    const start = solveDeadlift(0)
+    const top = solveDeadlift(0.5)
+
+    assert.equal(Math.round(start.positions.grip.x), Math.round(start.bar.x))
+    assert.equal(Math.round(top.positions.grip.x), Math.round(top.bar.x))
+    assert.ok(top.positions.hip.y < start.positions.hip.y)
+  })
+
+  it('produces zero offsets at the neutral squat setup', () => {
+    const info = buildSkeletonInfo('Squat')
+    const solution = solveSquat(0)
+    const offsets = computeJointOffsets(info, solution.positions)
+
+    Object.values(offsets).forEach((value) => {
+      assert.ok(Math.abs(value) < 1e-6)
+    })
   })
 })
 
