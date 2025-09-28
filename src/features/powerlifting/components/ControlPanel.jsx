@@ -51,7 +51,7 @@ const ControlPanel = ({
 
       <section className="space-y-1">
         <p className="uppercase tracking-[0.3em] text-black/70">Select lift</p>
-        <div className="grid grid-cols-1 gap-1 sm:grid-cols-2">
+        <div className="grid grid-cols-3 gap-1">
           {lifts.map((lift) => (
             <button
               key={lift}

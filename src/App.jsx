@@ -120,7 +120,7 @@ const App = () => {
 
   return (
     <MainLayout cue={cue} controls={layoutControls} sidebar={coachNotes}>
-      <div className="grid min-h-0 flex-1 gap-3 md:grid-cols-[minmax(0,1.45fr),minmax(0,1fr)]">
+      <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 md:grid-cols-[minmax(0,1.45fr),minmax(0,1fr)]">
         <div className="min-h-0">
           <AnimationCanvas
             title={`${selectedLift} torque study`}
