@@ -54,12 +54,10 @@ export const usePowerlifting = () => {
 
   const kinematics = useKinematics({
     liftType: selectedLift,
-    manualJointOverrides: {
-      ...manualOffsets,
-      bar: { offset: manualBarOffset },
-    },
+    manualAngleOffsets: manualOffsets,
     animatedAngleOffsets,
     animatedBarPosition,
+    manualBarOffset,
   });
 
   return {
