@@ -19,27 +19,8 @@ export const usePowerlifting = () => {
 
   const activeParameters = setupParameters[selectedLift] ?? DEFAULT_SETUP_PARAMETERS[selectedLift] ?? {};
 
-  const { joints: animatedOffsets, barOffset: animatedBarOffset, isPlaying, togglePlay, tempo, setTempo, progress, phase } =
+  const { joints: animatedAngleOffsets, barOffset: animatedBarPosition, isPlaying, togglePlay, tempo, setTempo, progress, phase } =
     useLiftAnimation({ liftType: selectedLift, parameters: activeParameters });
-
-  const combinedOverrides = useMemo(() => {
-    const overrides = {};
-    const jointKeys = new Set([...Object.keys(animatedOffsets ?? {}), ...Object.keys(manualOffsets ?? {})]);
-    jointKeys.forEach((joint) => {
-      const totalDegrees = (animatedOffsets?.[joint] ?? 0) + (manualOffsets?.[joint] ?? 0);
-      overrides[joint] = { angleOffset: (totalDegrees * Math.PI) / 180 };
-    });
-
-    const totalBarOffset = {
-      x: (animatedBarOffset?.x ?? 0) + (manualBarOffset?.x ?? 0),
-      y: (animatedBarOffset?.y ?? 0) + (manualBarOffset?.y ?? 0),
-    };
-
-    return {
-      ...overrides,
-      bar: { offset: totalBarOffset },
-    };
-  }, [animatedBarOffset, animatedOffsets, manualBarOffset, manualOffsets]);
 
   const handleAngleOffsetChange = (joint, value) => {
     setManualOffsets((current) => ({ ...current, [joint]: value }));
@@ -73,7 +54,12 @@ export const usePowerlifting = () => {
 
   const kinematics = useKinematics({
     liftType: selectedLift,
-    jointOverrides: combinedOverrides,
+    manualJointOverrides: {
+      ...manualOffsets,
+      bar: { offset: manualBarOffset },
+    },
+    animatedAngleOffsets,
+    animatedBarPosition,
   });
 
   return {
