@@ -3,6 +3,7 @@ a react project to illustrate the big 3 power lifting in a scientific way
 
 ## Features
 
+*   **Refactored Animation Logic:** The animation system has been re-architected for improved biomechanical accuracy and maintainability. The animation solver now directly outputs joint angle changes, which are then processed by a dedicated kinematics engine.
 *   **Vintage Mac OS UI:** Complete redesign of the application's interface with a classic Mac OS System 7 aesthetic, featuring distinct windows and high-contrast elements.
 *   **Modular Control Panel:** A new `VintageControlPanel` component provides a compact and consistent interface for all lift parameters, playback controls, and tuning adjustments.
 *   **Compact Stepper Controls:** Replaced traditional sliders and knobs with tactile `Stepper` components for precise adjustments.
