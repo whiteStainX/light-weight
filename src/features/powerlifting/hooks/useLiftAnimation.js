@@ -116,11 +116,13 @@ const solveSquat = (progress, params = {}) => {
   return { positions, bar, phase }
 }
 
+
 const solveBench = (progress, params = {}) => {
   const p = cycleScalar(progress)
 
   const cx = BAR_X
   const cy = 320
+
   const barTravel = cmToPx(params.barTravel ?? 22)
   const barBase = cy + cmToPx(7)
 
@@ -151,7 +153,7 @@ const solveBench = (progress, params = {}) => {
 
   return { positions, bar, phase }
 }
-
+ 
 const solveDeadlift = (progress, params = {}) => {
   const p = cycleScalar(progress)
 
@@ -263,6 +265,7 @@ export const useLiftAnimation = ({ liftType, parameters = {} }) => {
   const frame = useMemo(() => {
     const solver = profile.solver ?? solveSquat
     const normalized = normaliseProgress(progress)
+
     const solution = solver(normalized, parameters)
     const jointOffsets = computeJointOffsets(skeletonInfo, solution.positions)
     const baseBar = skeletonInfo.data.path.bar ?? { x: 0, y: 0 }
@@ -275,7 +278,9 @@ export const useLiftAnimation = ({ liftType, parameters = {} }) => {
       },
       phase: solution.phase,
     }
+
   }, [parameters, profile.solver, progress, skeletonInfo])
+
 
   const togglePlay = useCallback(() => {
     setIsPlaying((current) => !current)

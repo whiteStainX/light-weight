@@ -222,7 +222,6 @@ const AnimationCanvas = ({
   const benchHeight = surfaces.benchHeight ?? 28
 
   const highlightedJoints = trackedJoints.filter((joint) => KEY_JOINTS.has(joint))
-
   const benchWidth = Math.min(viewWidth * 0.64, viewWidth)
   const benchX = clamp(viewBounds.minX + viewWidth * 0.18, viewBounds.minX, viewBounds.maxX - benchWidth)
 

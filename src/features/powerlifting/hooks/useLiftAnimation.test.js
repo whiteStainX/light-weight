@@ -37,6 +37,7 @@ describe('useLiftAnimation motion solvers', () => {
     assert.ok(depth.positions.knee.y > depth.positions.hip.y)
   })
 
+
   it('responds to squat setup parameter changes', () => {
     const neutral = solveSquat(0.5)
     const wide = solveSquat(0.5, { kneeTravel: 14, hipSetback: 26 })
@@ -76,6 +77,7 @@ describe('useLiftAnimation motion solvers', () => {
 
     assert.ok(deficit.bar.y < standard.bar.y)
     assert.ok(deficit.positions.hip.y < standard.positions.hip.y)
+
   })
 
   it('produces zero offsets at the neutral squat setup', () => {
