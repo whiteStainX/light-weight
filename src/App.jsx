@@ -16,13 +16,24 @@ import {
 
 const LIFT_OPTIONS = Object.keys(liftData)
 
+const PAVEL_QUOTES = [
+  "Strength is a skill. It is not a random act of brutality.",
+  "The kettlebell is an ancient Russian weapon against weakness.",
+  "Strength has a greater purpose. Serve your family, your country, your God.",
+  "Don't train to get smoked; train to feel stronger every day.",
+  "A kettlebell is a cannonball with a handle—and a weapon against weakness.",
+  "You do not have a weak arm and a strong arm—but a strong and a stronger one.",
+  "Strength is not a data point; it's not a number. It's an attitude.",
+  "Comrade, breathe deep and crush the handle. The lift rewards tension, timing, and ruthless focus.",
+];
+
 const App = () => {
-  const [selectedLift, setSelectedLift] = useState(LIFT_OPTIONS[0])
-  const cue = useMemo(
-    () =>
-      `Comrade, breathe deep and crush the handle. The ${selectedLift.toLowerCase()} rewards tension, timing, and ruthless focus.`,
-    [selectedLift],
-  )
+  const [selectedLift, setSelectedLift] = useState(LIFT_OPTIONS[0]);
+  const cue = useMemo(() => {
+    const filteredQuotes = PAVEL_QUOTES.filter(q => q.toLowerCase().includes(selectedLift.toLowerCase()));
+    const quotePool = filteredQuotes.length > 0 ? filteredQuotes : PAVEL_QUOTES;
+    return quotePool[Math.floor(Math.random() * quotePool.length)];
+  }, [selectedLift]);
 
   const [manualOffsets, setManualOffsets] = useState({})
   const [manualBarOffset, setManualBarOffset] = useState({ x: 0, y: 0 })
@@ -94,6 +105,15 @@ const App = () => {
 
   const parameterDefinitions = PARAMETER_DEFINITIONS[selectedLift] ?? []
 
+  const pavelAscii = `
+    ,--.----.    
+   /  /  \   \   
+  /  /    \   \  
+ /  /      \   \ 
+/  /--------\   \ 
+'.___________.' 
+`;
+
   return (
     <MainLayout>
       <div className="flex flex-1 min-h-0 gap-4">
@@ -135,11 +155,16 @@ const App = () => {
           />
         </VintageWindow>
       </div>
-      <VintageWindow title="Coach's Cue" className="h-24 font-mono text-sm">
-        <Typewriter text={cue} />
+      <VintageWindow title="Coach's Cue" className="h-32 font-mono text-sm">
+        <div className="flex items-center h-full">
+          <pre className="text-xs leading-none">{pavelAscii}</pre>
+          <div className="flex-1 pl-4">
+            <Typewriter text={cue} />
+          </div>
+        </div>
       </VintageWindow>
     </MainLayout>
-  )
+  );
 }
 
 export default App
