@@ -103,19 +103,26 @@ const computeJointPositions = (
 
 const estimateTorque = (joints, barPosition) => {
   const perJoint = {}
+  const leverArms = {}
   let total = 0
 
   Object.entries(joints).forEach(([joint, point]) => {
     if (joint === 'bar') return
     const leverArm = (barPosition?.x ?? 0) - point.x
-    const torque = Number((leverArm * 0.1).toFixed(2))
-    perJoint[joint] = torque
-    total += Math.abs(torque)
+    const torqueValue = Number((leverArm * 0.1).toFixed(2))
+    perJoint[joint] = torqueValue
+    leverArms[joint] = {
+      lever: leverArm,
+      direction: Math.sign(leverArm),
+      magnitude: Math.abs(torqueValue),
+    }
+    total += Math.abs(torqueValue)
   })
 
   return {
     perJoint,
     total: Number(total.toFixed(2)),
+    leverArms,
   }
 }
 

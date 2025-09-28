@@ -1,4 +1,4 @@
-const StickFigure = ({ joints, limbs, nodeRadius = 6, strokeWidth = 3, accentJoint }) => {
+const StickFigure = ({ joints, limbs, nodeRadius = 6, strokeWidth = 3, accentJoint, className }) => {
   if (!joints || !limbs) {
     return null
   }
@@ -8,7 +8,7 @@ const StickFigure = ({ joints, limbs, nodeRadius = 6, strokeWidth = 3, accentJoi
     : accentJoint
 
   return (
-    <g>
+    <g className={className}>
       {limbs.map(({ from, to }) => {
         const fromPoint = joints[from]
         const toPoint = joints[to]
@@ -28,12 +28,12 @@ const StickFigure = ({ joints, limbs, nodeRadius = 6, strokeWidth = 3, accentJoi
       })}
 
       {Object.entries(joints).map(([key, point]) => (
-        <circle
-          key={key}
-          cx={point.x}
-          cy={point.y}
-          r={nodeRadius}
-          className={
+          <circle
+            key={key}
+            cx={point.x}
+            cy={point.y}
+            r={nodeRadius}
+            className={
             accentLookup instanceof Set
               ? accentLookup.has(key)
                 ? 'fill-zinc-50'

@@ -64,76 +64,62 @@ const App = () => {
     setManualBarOffset((current) => ({ ...current, ...next }))
   }
 
-  const { joints, limbs, barPosition, torque, root, rootPosition, angles, surfaces, frontProfile } = useKinematics({
+  const { joints, limbs, barPosition, torque, root, rootPosition, angles, surfaces } = useKinematics({
+
     liftType: selectedLift,
     jointOverrides: combinedOverrides,
   })
 
-
   const layoutControls = (
-    <div className="flex items-center gap-3 text-xs uppercase tracking-[0.3em] text-zinc-500">
-      <span className="text-zinc-300">Active lift →</span>
-      <span className="rounded-sm border border-zinc-700 px-3 py-1 text-zinc-100">{selectedLift}</span>
-      <span className="hidden md:inline text-zinc-500">Both views synced to current kinematics.</span>
+    <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.3em] text-black/70">
+      <span className="rounded border border-black/30 bg-white px-2 py-1 text-black">{selectedLift}</span>
+      <span className="hidden md:inline text-black/50">kinematic study in progress</span>
     </div>
   )
 
   return (
-    <MainLayout cue={cue} controls={layoutControls} sidebar={
-      <ControlPanel
-        lifts={LIFT_OPTIONS}
-        selectedLift={selectedLift}
-        onSelectLift={setSelectedLift}
+    <MainLayout
+      cue={cue}
+      controls={layoutControls}
+      sidebar={
+        <ControlPanel
+          lifts={LIFT_OPTIONS}
+          selectedLift={selectedLift}
+          onSelectLift={setSelectedLift}
+          torque={torque}
+          angles={angles}
+          manualOffsets={manualOffsets}
+          onAngleOffsetChange={handleAngleOffsetChange}
+          onResetAngles={handleResetAdjustments}
+          onBarOffsetChange={handleBarOffsetChange}
+          barOffset={manualBarOffset}
+          isPlaying={isPlaying}
+          onTogglePlay={togglePlay}
+          tempo={tempo}
+          onTempoChange={setTempo}
+          phaseLabel={phase}
+        />
+      }
+    >
+      <AnimationCanvas
+        title={`${selectedLift} torque study`}
+        joints={joints}
+        limbs={limbs}
+        barPosition={barPosition}
+        rootPosition={rootPosition ?? joints?.[root]}
         torque={torque}
+        progress={progress}
+        phase={phase}
+        surfaces={surfaces}
         angles={angles}
-        manualOffsets={manualOffsets}
-        onAngleOffsetChange={handleAngleOffsetChange}
-        onResetAngles={handleResetAdjustments}
-        onBarOffsetChange={handleBarOffsetChange}
-        barOffset={manualBarOffset}
-        isPlaying={isPlaying}
-        onTogglePlay={togglePlay}
-        tempo={tempo}
-        onTempoChange={setTempo}
-        phaseLabel={phase}
       />
-    }>
-      <div className="grid gap-6 lg:grid-cols-2">
-        <AnimationCanvas
-          title={`${selectedLift} mechanics`}
-          joints={joints}
-          limbs={limbs}
-          barPosition={barPosition}
-          variant="side"
-          rootPosition={rootPosition ?? joints?.[root]}
-          torque={torque}
-          progress={progress}
-          phase={phase}
-          surfaces={surfaces}
-          angles={angles}
-          frontProfile={frontProfile}
-        />
-        <AnimationCanvas
-          title={`${selectedLift} structure`}
-          joints={joints}
-          limbs={limbs}
-          barPosition={barPosition}
-          variant="front"
-          rootPosition={rootPosition ?? joints?.[root]}
-          torque={torque}
-          progress={progress}
-          phase={phase}
-          surfaces={surfaces}
-          angles={angles}
-          frontProfile={frontProfile}
-        />
-      </div>
-      <section className="rounded-md border border-zinc-800 bg-zinc-900/50 p-6 text-sm leading-relaxed text-zinc-300 shadow-[0_0_0_1px_rgba(255,255,255,0.08)]">
-        <h2 className="mb-2 text-xs uppercase tracking-[0.3em] text-zinc-500">Coach&apos;s cue</h2>
-        <p>
-          Hold power in reserve until the moment of truth. Maintain the wedge, drive with intent, and remember:
-          strength is patience under load. Light weight, baby—because discipline makes it so.
-        </p>
+      <section className="rounded border border-black/20 bg-white px-4 py-3 text-xs leading-relaxed text-black/70 shadow-[4px_4px_0_0_rgba(0,0,0,0.12)]">
+        <h2 className="mb-2 text-[11px] uppercase tracking-[0.35em] text-black/60">Coach&apos;s log</h2>
+        <ul className="grid gap-1 text-[11px]">
+          <li>Align the bar over the mid-foot at all times; torque arrows will flare when it drifts.</li>
+          <li>Keep the highlighted joints stacked vertically before initiating concentric drive.</li>
+          <li>Re-breathe and brace whenever the annotations prompt a reset in the cycle.</li>
+        </ul>
       </section>
     </MainLayout>
   )

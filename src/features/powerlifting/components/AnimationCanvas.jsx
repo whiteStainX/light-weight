@@ -2,32 +2,91 @@ import { useMemo } from 'react'
 
 import StickFigure from './StickFigure'
 
-const CANVAS_WIDTH = 420
-const CANVAS_HEIGHT = 480
-const DEFAULT_FRONT_SPREAD = 0.55
+const CANVAS_WIDTH = 380
+const CANVAS_HEIGHT = 320
+const GRID_STEP = 32
+const KEY_JOINTS = new Set(['foot', 'knee', 'hip', 'shoulder', 'elbow', 'grip'])
 
-const buildGridLines = (step = 40) => {
+const buildGridLines = () => {
   const lines = []
-  for (let i = step; i < CANVAS_HEIGHT; i += step) {
-    lines.push({ type: 'horizontal', offset: i })
+  for (let x = GRID_STEP; x < CANVAS_WIDTH; x += GRID_STEP) {
+    lines.push({ type: 'vertical', offset: x })
   }
-  for (let j = step; j < CANVAS_WIDTH; j += step) {
-    lines.push({ type: 'vertical', offset: j })
+  for (let y = GRID_STEP; y < CANVAS_HEIGHT; y += GRID_STEP) {
+    lines.push({ type: 'horizontal', offset: y })
   }
   return lines
 }
 
-const projectPoint = (point, variant, anchorX, frontProfile) => {
-  if (!point) return point
-  if (variant === 'front') {
-    const centerX = frontProfile?.center ?? CANVAS_WIDTH / 2
-    const spread = frontProfile?.spread ?? DEFAULT_FRONT_SPREAD
-    return {
-      x: centerX + (point.x - anchorX) * spread,
-      y: point.y,
-    }
+const formatTorque = (value) => `${value >= 0 ? '+' : ''}${value.toFixed(2)}`
+
+const buildTorqueGlyphs = (joints, barPosition, torque) => {
+  if (!joints || !barPosition || !torque?.leverArms) {
+    return []
+
   }
-  return point
+
+  const barX = barPosition.x
+
+  return Object.entries(torque.leverArms)
+    .filter(([joint]) => KEY_JOINTS.has(joint) && joints[joint])
+    .map(([joint, data]) => {
+      const point = joints[joint]
+      const span = barX - point.x
+      const spanMagnitude = Math.abs(span)
+      if (spanMagnitude < 1) {
+        return {
+          joint,
+          momentLine: null,
+          arcPath: null,
+          arrowPath: null,
+          label: `${formatTorque(torque.perJoint[joint] ?? 0)} Nm`,
+          leverLabel: 'Neutral',
+          labelPos: { x: point.x + 16, y: point.y - 12 },
+        }
+      }
+
+      const direction = span >= 0 ? 1 : -1
+      const radius = 14 + Math.min(spanMagnitude * 0.2, 22)
+      const startAngle = direction > 0 ? -Math.PI / 2 : Math.PI / 2
+      const endAngle = direction > 0 ? Math.PI / 2 : -Math.PI / 2
+      const startPoint = {
+        x: point.x + radius * Math.cos(startAngle),
+        y: point.y + radius * Math.sin(startAngle),
+      }
+      const endPoint = {
+        x: point.x + radius * Math.cos(endAngle),
+        y: point.y + radius * Math.sin(endAngle),
+      }
+      const sweepFlag = direction > 0 ? 1 : 0
+      const arrowBaseAngle = endAngle + (direction > 0 ? Math.PI / 2 : -Math.PI / 2)
+      const arrowWing = (offset) => ({
+        x: endPoint.x - 6 * Math.cos(arrowBaseAngle + offset),
+        y: endPoint.y - 6 * Math.sin(arrowBaseAngle + offset),
+      })
+      const wingLeft = arrowWing(-Math.PI / 6)
+      const wingRight = arrowWing(Math.PI / 6)
+
+      return {
+        joint,
+        momentLine: {
+          x1: point.x,
+          y1: point.y,
+          x2: barX,
+          y2: point.y,
+          direction,
+        },
+        arcPath: `M ${startPoint.x.toFixed(2)} ${startPoint.y.toFixed(2)} A ${radius.toFixed(2)} ${radius
+          .toFixed(2)} 0 0 ${sweepFlag} ${endPoint.x.toFixed(2)} ${endPoint.y.toFixed(2)}`,
+        arrowPath: `M ${endPoint.x.toFixed(2)} ${endPoint.y.toFixed(2)} L ${wingLeft.x.toFixed(2)} ${wingLeft.y.toFixed(2)} M ${endPoint.x.toFixed(2)} ${endPoint.y.toFixed(2)} L ${wingRight.x.toFixed(2)} ${wingRight.y.toFixed(2)}`,
+        label: `${formatTorque(torque.perJoint[joint] ?? 0)} Nm`,
+        leverLabel: `${direction > 0 ? 'CW' : 'CCW'} ${spanMagnitude.toFixed(0)}px`,
+        labelPos: {
+          x: point.x + span / 2,
+          y: point.y - (direction > 0 ? 14 : 28),
+        },
+      }
+    })
 }
 
 const AnimationCanvas = ({
@@ -35,214 +94,48 @@ const AnimationCanvas = ({
   joints,
   limbs,
   barPosition,
-  variant = 'side',
   rootPosition,
   torque,
   progress = 0,
   phase,
   surfaces = {},
   angles,
-  frontProfile,
 }) => {
-  const anchorX = rootPosition?.x ?? CANVAS_WIDTH / 2
-
-  const projectedJoints = useMemo(() => {
-    if (!joints) return null
-    return Object.fromEntries(
-      Object.entries(joints).map(([key, point]) => [
-        key,
-        projectPoint(point, variant, anchorX, frontProfile),
-      ]),
-    )
-  }, [anchorX, frontProfile, joints, variant])
-
-  const projectedBar = useMemo(
-    () => projectPoint(barPosition, variant, anchorX, frontProfile),
-    [anchorX, barPosition, frontProfile, variant],
-  )
-
-  const { displayJoints, displayLimbs, barHalfSpan } = useMemo(() => {
-    if (!projectedJoints) {
-      return { displayJoints: null, displayLimbs: limbs, barHalfSpan: 80 }
-    }
-
-    const baseJoints = Object.fromEntries(
-      Object.entries(projectedJoints).filter(([key]) => key !== 'bar'),
-    )
-    const baseLimbs = limbs.filter(({ from, to }) => from !== 'bar' && to !== 'bar')
-
-    if (variant !== 'front') {
-      return { displayJoints: baseJoints, displayLimbs: baseLimbs, barHalfSpan: 80 }
-    }
-
-    if (!frontProfile) {
-      const mirroredEntries = Object.entries(baseJoints).reduce((acc, [key, point]) => {
-        acc[`${key}_mirror`] = {
-          x: CANVAS_WIDTH - point.x,
-          y: point.y,
-        }
-        return acc
-      }, {})
-
-      const mirroredLimbs = baseLimbs.map(({ from, to }) => ({
-        from: `${from}_mirror`,
-        to: `${to}_mirror`,
-      }))
-
-      return {
-        displayJoints: { ...baseJoints, ...mirroredEntries },
-        displayLimbs: [...baseLimbs, ...mirroredLimbs],
-        barHalfSpan: 80,
-      }
-    }
-
-    const widthCache = new Map()
-    const centerLine = frontProfile.center ?? CANVAS_WIDTH / 2
-    const fallbackWidth = frontProfile.fallbackWidth ?? 36
-    const spread = frontProfile.spread ?? DEFAULT_FRONT_SPREAD
-    const yOffsets = frontProfile.yOffsets ?? {}
-
-    const getAngleOffset = (joint) => Math.abs(angles?.[joint]?.offset ?? 0)
-
-    const resolveWidth = (joint, point) => {
-      if (widthCache.has(joint)) {
-        return widthCache.get(joint)
-      }
-
-      const config = frontProfile.widths?.[joint]
-      const fallback = Number.isFinite(point?.x)
-        ? Math.abs(point.x - anchorX) * spread || fallbackWidth
-        : fallbackWidth
-
-      let width = fallback
-
-      if (!config) {
-        width = fallback
-      } else if (config.follow) {
-        const followPoint = config.follow === joint ? point : projectedJoints?.[config.follow]
-        const followWidth = resolveWidth(config.follow, followPoint)
-        width = (Number.isFinite(followWidth) ? followWidth : fallbackWidth) + (config.offset ?? 0)
-      } else {
-        width = config.base ?? fallback
-        if (config.scale) {
-          const driverKey = config.driver ?? joint
-          width += getAngleOffset(driverKey) * config.scale
-        }
-        if (!config.follow && config.offset) {
-          width += config.offset
-        }
-      }
-
-      if (config?.min != null) {
-        width = Math.max(config.min, width)
-      }
-      if (config?.max != null) {
-        width = Math.min(config.max, width)
-      }
-
-      if (!Number.isFinite(width)) {
-        width = fallbackWidth
-      }
-
-      widthCache.set(joint, width)
-      return width
-    }
-
-    const bilateralJoints = Object.entries(baseJoints).reduce((acc, [key, point]) => {
-      const width = resolveWidth(key, point)
-      const yOffset = yOffsets[key] ?? 0
-      acc[`${key}_left`] = {
-        x: centerLine - width,
-        y: point.y + yOffset,
-      }
-      acc[`${key}_right`] = {
-        x: centerLine + width,
-        y: point.y + yOffset,
-      }
-      return acc
-    }, {})
-
-    const bilateralLimbs = baseLimbs.flatMap(({ from, to }) => [
-      { from: `${from}_left`, to: `${to}_left` },
-      { from: `${from}_right`, to: `${to}_right` },
-    ])
-
-    const crossLinks = (frontProfile.crossLinks ?? []).map((joint) => ({
-      from: `${joint}_left`,
-      to: `${joint}_right`,
-    }))
-
-    const filteredCrossLinks = crossLinks.filter(
-      ({ from, to }) => bilateralJoints[from] && bilateralJoints[to],
-    )
-
-    const barSpan = resolveWidth('bar', projectedBar ?? joints?.bar) ?? 80
-
-    return {
-      displayJoints: bilateralJoints,
-      displayLimbs: [...bilateralLimbs, ...filteredCrossLinks],
-      barHalfSpan: barSpan,
-    }
-  }, [anchorX, angles, frontProfile, joints, limbs, projectedBar, projectedJoints, variant])
-
   const gridLines = useMemo(() => buildGridLines(), [])
+  const barX = barPosition?.x ?? CANVAS_WIDTH / 2
+  const torqueGlyphs = useMemo(() => buildTorqueGlyphs(joints, barPosition, torque), [barPosition, joints, torque])
+  const trackedJoints = useMemo(() => Object.keys(joints ?? {}), [joints])
+
+  const groundY = surfaces.ground ?? CANVAS_HEIGHT - 12
+  const benchTop = surfaces.benchTop
+  const benchHeight = surfaces.benchHeight ?? 28
+
+  const highlightedJoints = trackedJoints.filter((joint) => KEY_JOINTS.has(joint))
 
   const groundY = surfaces.ground
   const benchTop = surfaces.benchTop
   const benchHeight = surfaces.benchHeight ?? 32
 
   return (
-    <div className="flex h-full flex-col gap-4 rounded-md border border-zinc-700/80 bg-zinc-900/60 p-4 shadow-[0_0_0_1px_rgba(255,255,255,0.08)]">
-      <div className="flex items-baseline justify-between">
+    <div className="flex flex-col gap-3 rounded border border-black/20 bg-white px-4 py-3 text-black shadow-[4px_4px_0_0_rgba(0,0,0,0.12)]">
+      <header className="flex items-end justify-between text-[11px] uppercase tracking-[0.3em] text-black/60">
         <div>
-          <p className="text-xs uppercase tracking-[0.2em] text-zinc-400">{variant} view</p>
-          <h2 className="text-lg font-semibold text-zinc-100">{title}</h2>
+          <p className="text-black">{title}</p>
+          <p className="text-[10px]">Phase · {phase ?? 'Cycle'} · {Math.round((progress ?? 0) * 100)}%</p>
         </div>
-        <div className="text-right text-[11px] leading-tight text-zinc-400">
-          <p className="uppercase tracking-[0.3em]">{phase ?? 'Cycle'}</p>
-          <p className="text-zinc-200">{Math.round((progress ?? 0) * 100)}%</p>
-        </div>
-
         {torque && (
-          <dl className="text-right text-xs text-zinc-400">
-            <dt className="uppercase tracking-[0.2em]">total torque</dt>
-            <dd className="text-base font-semibold text-zinc-100">{torque.total.toFixed(2)} Nm*</dd>
-          </dl>
+          <div className="text-right text-[10px] leading-tight">
+            <p>Total torque</p>
+            <p className="text-black text-sm font-semibold tracking-tight">{torque.total.toFixed(2)} Nm</p>
+          </div>
         )}
-      </div>
+      </header>
       <svg
         viewBox={`0 0 ${CANVAS_WIDTH} ${CANVAS_HEIGHT}`}
-        className="flex-1 rounded-sm bg-zinc-950/80 text-zinc-100"
+        className="h-[320px] w-full rounded border border-black/10 bg-[#fdfdf7]"
         role="img"
-        aria-label={`${title} ${variant} view schematic`}
+        aria-label={`${title} single-view diagram`}
       >
-        <defs>
-          <radialGradient id="bgFade" cx="50%" cy="35%" r="70%">
-            <stop offset="0%" stopColor="rgba(255,255,255,0.05)" />
-            <stop offset="100%" stopColor="rgba(255,255,255,0)" />
-          </radialGradient>
-        </defs>
-        <rect width="100%" height="100%" fill="url(#bgFade)" />
-        {typeof groundY === 'number' && (
-          <rect
-            x={0}
-            y={groundY}
-            width={CANVAS_WIDTH}
-            height={Math.max(0, CANVAS_HEIGHT - groundY)}
-            fill="rgba(63,63,70,0.35)"
-          />
-        )}
-
-        {typeof benchTop === 'number' && (
-          <rect
-            x={CANVAS_WIDTH * 0.2}
-            y={benchTop}
-            width={CANVAS_WIDTH * 0.6}
-            height={benchHeight}
-            rx={8}
-            fill="rgba(63,63,70,0.45)"
-          />
-        )}
         {gridLines.map((line, index) =>
           line.type === 'horizontal' ? (
             <line
@@ -251,7 +144,7 @@ const AnimationCanvas = ({
               y1={line.offset}
               x2={CANVAS_WIDTH}
               y2={line.offset}
-              stroke="rgba(255,255,255,0.08)"
+              stroke="rgba(0,0,0,0.08)"
               strokeWidth={1}
             />
           ) : (
@@ -261,46 +154,127 @@ const AnimationCanvas = ({
               y1={0}
               x2={line.offset}
               y2={CANVAS_HEIGHT}
-              stroke="rgba(255,255,255,0.08)"
+              stroke="rgba(0,0,0,0.08)"
               strokeWidth={1}
             />
           ),
         )}
 
-        {projectedBar && (
+        <line
+          x1={barX}
+          y1={0}
+          x2={barX}
+          y2={CANVAS_HEIGHT}
+          stroke="black"
+          strokeWidth={1.5}
+          strokeDasharray="6 6"
+        />
+
+        {typeof groundY === 'number' && (
+          <rect x={0} y={groundY} width={CANVAS_WIDTH} height={CANVAS_HEIGHT - groundY} fill="rgba(0,0,0,0.05)" />
+        )}
+
+        {typeof benchTop === 'number' && (
+          <rect
+            x={CANVAS_WIDTH * 0.18}
+            y={benchTop}
+            width={CANVAS_WIDTH * 0.64}
+            height={benchHeight}
+            fill="rgba(0,0,0,0.05)"
+            stroke="black"
+            strokeWidth={1}
+          />
+        )}
+
+        {torqueGlyphs.map(({ joint, momentLine, arcPath, arrowPath, labelPos, label, leverLabel }) => (
+          <g key={`torque-${joint}`}>
+            {momentLine && (
+              <line
+                x1={momentLine.x1}
+                y1={momentLine.y1}
+                x2={momentLine.x2}
+                y2={momentLine.y2}
+                stroke="black"
+                strokeWidth={1}
+                strokeDasharray="4 4"
+              />
+            )}
+            {arcPath && <path d={arcPath} stroke="black" strokeWidth={1} fill="none" />}
+            {arrowPath && <path d={arrowPath} stroke="black" strokeWidth={1} fill="none" />}
+            <text
+              x={labelPos.x}
+              y={labelPos.y}
+              textAnchor="middle"
+              className="fill-black text-[9px]"
+            >
+              {label}
+            </text>
+            <text
+              x={labelPos.x}
+              y={labelPos.y + 10}
+              textAnchor="middle"
+              className="fill-black/60 text-[8px] uppercase tracking-[0.2em]"
+            >
+              {leverLabel}
+            </text>
+          </g>
+        ))}
+
+        {barPosition && (
           <g>
             <line
-              x1={projectedBar.x - (barHalfSpan ?? 80)}
-              y1={projectedBar.y}
-              x2={projectedBar.x + (barHalfSpan ?? 80)}
-              y2={projectedBar.y}
-              stroke="rgba(255,255,255,0.55)"
-              strokeWidth={4}
+              x1={barPosition.x - 60}
+              y1={barPosition.y}
+              x2={barPosition.x + 60}
+              y2={barPosition.y}
+              stroke="black"
+              strokeWidth={3}
               strokeLinecap="round"
             />
-            <circle
-              cx={projectedBar.x}
-              cy={projectedBar.y}
-              r={10}
-              fill="rgba(255,255,255,0.65)"
-            />
+            <circle cx={barPosition.x} cy={barPosition.y} r={9} fill="white" stroke="black" strokeWidth={2} />
           </g>
         )}
 
         <StickFigure
-          joints={displayJoints}
-          limbs={displayLimbs}
-          accentJoint={
-            variant === 'front'
-              ? ['shoulder_left', 'shoulder_right']
-              : 'hip'
-          }
+          joints={joints}
+          limbs={limbs}
+          nodeRadius={5}
+          strokeWidth={3}
+          accentJoint={highlightedJoints}
+          className="stroke-black fill-white"
         />
+
+        {rootPosition && (
+          <circle cx={rootPosition.x} cy={rootPosition.y} r={4} fill="black" stroke="white" strokeWidth={1} />
+        )}
+
+        {angles && (
+          <g className="text-[8px] uppercase tracking-[0.2em] fill-black/60">
+            {Object.entries(angles)
+              .filter(([joint]) => KEY_JOINTS.has(joint) && joints?.[joint])
+              .map(([joint, { absolute }]) => (
+                <text key={`angle-${joint}`} x={joints[joint].x + 8} y={joints[joint].y + 4}>
+                  {absolute.toFixed(0)}°
+                </text>
+              ))}
+          </g>
+        )}
       </svg>
-      <p className="text-[11px] leading-relaxed text-zinc-400">
-        *Torque is a simplified estimate using the horizontal distance between the bar path and each joint.
-        Use it as a comparative cue, comrade, not absolute truth.
-      </p>
+      <footer className="flex items-center justify-between text-[10px] uppercase tracking-[0.2em] text-black/60">
+        <div className="flex items-center gap-2">
+          <span className="inline-flex h-3 w-3 items-center justify-center rounded-sm border border-black bg-black" />
+          <span>Torque direction markers</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="inline-flex h-1 w-24 overflow-hidden rounded-full border border-black/40">
+            <span
+              className="block h-full bg-black"
+              style={{ width: `${Math.round((progress ?? 0) * 100)}%` }}
+            />
+          </span>
+          <span>Cycle progress</span>
+        </div>
+      </footer>
     </div>
   )
 }

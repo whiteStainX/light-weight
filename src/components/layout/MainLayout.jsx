@@ -1,26 +1,28 @@
 const MainLayout = ({ children, cue, controls, sidebar }) => {
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100">
-      <div className="mx-auto flex min-h-screen max-w-6xl flex-col gap-10 px-6 py-10">
-        <header className="space-y-6 border-b border-zinc-800 pb-6">
-          <div className="space-y-2">
-            <p className="text-xs uppercase tracking-[0.4em] text-zinc-500">Light Weight Baby</p>
-            <h1 className="text-4xl font-semibold tracking-tight text-zinc-100">
-              Precision strength illustration suite
-            </h1>
-            <p className="max-w-3xl text-sm text-zinc-400">
-              {cue}
-            </p>
+    <div className="min-h-screen bg-[#f7f7f2] text-[#161616]">
+      <div className="mx-auto flex min-h-screen max-w-5xl flex-col gap-6 px-4 py-6">
+        <header className="rounded border border-black/20 bg-white px-5 py-4 shadow-[4px_4px_0_0_rgba(0,0,0,0.12)]">
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div className="space-y-1">
+              <p className="text-[11px] uppercase tracking-[0.35em] text-black/70">Light Weight Baby</p>
+              <h1 className="text-2xl font-semibold tracking-wide text-black">Biomechanics Console</h1>
+              <p className="max-w-xl text-xs leading-relaxed text-black/70">{cue}</p>
+            </div>
+            {controls && (
+              <div className="flex flex-col items-end gap-2 text-[11px] uppercase tracking-[0.25em] text-black/60">
+                {controls}
+              </div>
+            )}
           </div>
-          {controls && <div className="flex flex-wrap items-center gap-3 text-sm text-zinc-300">{controls}</div>}
         </header>
 
-        <div className="grid flex-1 gap-8 lg:grid-cols-[minmax(0,2fr),minmax(0,1fr)]">
-          <main className="space-y-6">{children}</main>
-          {sidebar && <aside className="lg:sticky lg:top-10">{sidebar}</aside>}
+        <div className="grid flex-1 gap-4 lg:grid-cols-[minmax(0,1.6fr),minmax(0,1fr)]">
+          <main className="flex flex-col gap-4">{children}</main>
+          {sidebar && <aside className="self-start lg:sticky lg:top-6">{sidebar}</aside>}
         </div>
 
-        <footer className="border-t border-zinc-800 pt-4 text-[11px] uppercase tracking-[0.3em] text-zinc-600">
+        <footer className="rounded border border-black/20 bg-white px-5 py-3 text-[10px] uppercase tracking-[0.3em] text-black/60 shadow-[4px_4px_0_0_rgba(0,0,0,0.12)]">
           Strength is a skill—practice with intent, comrade.
         </footer>
       </div>

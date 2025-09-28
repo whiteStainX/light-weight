@@ -57,8 +57,9 @@ describe('estimateTorque', () => {
     const neutral = estimateTorque(positions, skeleton.basePath.bar)
     const forward = estimateTorque(positions, { ...skeleton.basePath.bar, x: skeleton.basePath.bar.x + 30 })
 
-
     assert.ok(forward.total > neutral.total)
     assert.ok(forward.perJoint.hip > neutral.perJoint.hip)
+    assert.ok(forward.leverArms.hip.lever > neutral.leverArms.hip.lever)
+    assert.equal(forward.leverArms.hip.direction, 1)
   })
 })
