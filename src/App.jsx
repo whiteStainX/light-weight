@@ -65,6 +65,7 @@ const App = () => {
   }
 
   const { joints, limbs, barPosition, torque, root, rootPosition, angles, surfaces } = useKinematics({
+
     liftType: selectedLift,
     jointOverrides: combinedOverrides,
   })

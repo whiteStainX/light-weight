@@ -23,6 +23,7 @@ const formatTorque = (value) => `${value >= 0 ? '+' : ''}${value.toFixed(2)}`
 const buildTorqueGlyphs = (joints, barPosition, torque) => {
   if (!joints || !barPosition || !torque?.leverArms) {
     return []
+
   }
 
   const barX = barPosition.x
@@ -110,6 +111,10 @@ const AnimationCanvas = ({
   const benchHeight = surfaces.benchHeight ?? 28
 
   const highlightedJoints = trackedJoints.filter((joint) => KEY_JOINTS.has(joint))
+
+  const groundY = surfaces.ground
+  const benchTop = surfaces.benchTop
+  const benchHeight = surfaces.benchHeight ?? 32
 
   return (
     <div className="flex flex-col gap-3 rounded border border-black/20 bg-white px-4 py-3 text-black shadow-[4px_4px_0_0_rgba(0,0,0,0.12)]">
