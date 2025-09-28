@@ -1,0 +1,14 @@
+.control-module {
+  border: 1px solid #000;
+  padding: 8px;
+}
+
+.module-title {
+  font-family: 'Geneva', sans-serif;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  margin-bottom: 8px;
+  border-bottom: 1px solid #000;
+  padding-bottom: 4px;
+}

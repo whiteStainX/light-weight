@@ -1,24 +1,8 @@
-const toDisplayValue = (value, step = 1) => {
-  if (!Number.isFinite(value)) return '—'
-  if (step >= 1) {
-    return Math.round(value)
-  }
-  if (step >= 0.5) {
-    return value.toFixed(1)
-  }
-  return value.toFixed(2)
-}
+import Knob from './Knob';
 
-const SetupParameters = ({
-  lift,
-  definitions = [],
-  values = {},
-  defaults = {},
-  onChange,
-  onReset,
-}) => {
+const SetupParameters = ({ lift, definitions = [], values = {}, defaults = {}, onChange, onReset }) => {
   if (!definitions.length) {
-    return null
+    return null;
   }
 
   return (
@@ -37,34 +21,27 @@ const SetupParameters = ({
         </button>
       </header>
 
-      <div className="grid gap-2">
-        {definitions.map(({ key, label, description, unit = '', min = 0, max = 1, step = 1 }) => {
-          const current = Number(values?.[key] ?? defaults?.[key] ?? min)
+      <div className="grid grid-cols-3 grid-rows-2 gap-x-2 gap-y-4">
+        {definitions.map(({ key, label, description, min = 0, max = 1, step = 1 }) => {
+          const current = Number(values?.[key] ?? defaults?.[key] ?? min);
           return (
-            <label key={key} className="space-y-1">
-              <div className="flex items-baseline justify-between text-[10px] uppercase tracking-[0.25em] text-black/70">
-                <span>{label}</span>
-                <span className="text-[#0c0c0c]">
-                  {toDisplayValue(current, step)} {unit}
-                </span>
-              </div>
-              <input
-                type="range"
+            <div key={key} className="flex flex-col items-center">
+              <Knob
+                label={label}
+                value={current}
+                onChange={(value) => onChange?.(key, value)}
                 min={min}
                 max={max}
                 step={step}
-                value={current}
-                onChange={(event) => onChange?.(key, Number(event.target.value))}
-                className="w-full accent-black"
               />
-              {description && <p className="text-[9px] leading-snug text-black/60">{description}</p>}
-            </label>
-          )
-        })}
+              {description && <p className="text-[8px] text-center mt-1 text-black/60">{description}</p>}
+            </div>
+          );
+        })} 
       </div>
     </section>
-  )
-}
+  );
+};
 
-export default SetupParameters
+export default SetupParameters;
 

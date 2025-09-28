@@ -376,16 +376,16 @@ const AnimationCanvas = ({
           </g>
         )}
       </svg>
-      <footer className="flex items-center justify-between text-[10px] uppercase tracking-[0.2em] text-black/70">
-        <div className="flex items-center gap-2">
+      <footer className="flex items-center justify-between gap-4 text-[10px] uppercase tracking-[0.2em] text-black/70">
+        <div className="flex items-center gap-2 flex-shrink-0">
           <span className="inline-flex h-3 w-3 items-center justify-center rounded-sm border border-black bg-black" />
-          <span>Torque direction markers</span>
+          <span>Torque markers</span>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="inline-flex h-1 w-24 overflow-hidden rounded-full border border-black/40">
+        <div className="flex items-center gap-2 w-1/3 flex-shrink">
+          <span className="inline-flex h-1 w-full overflow-hidden rounded-full border border-black/40">
             <span className="block h-full bg-black" style={{ width: `${Math.round((progress ?? 0) * 100)}%` }} />
           </span>
-          <span>Cycle progress</span>
+          <span className="flex-shrink-0">Progress</span>
         </div>
       </footer>
     </div>

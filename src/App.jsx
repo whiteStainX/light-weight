@@ -1,171 +1,84 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo } from 'react';
 
-import MainLayout from './components/layout/MainLayout'
-import AnimationCanvas from './features/powerlifting/components/AnimationCanvas'
-import ControlPanel from './features/powerlifting/components/ControlPanel'
-import SetupParameters from './features/powerlifting/components/SetupParameters'
-import { useKinematics } from './features/powerlifting/hooks/useKinematics'
-import { useLiftAnimation } from './features/powerlifting/hooks/useLiftAnimation'
-
-import { liftData } from './features/powerlifting/lib/liftData.js'
-import {
-  DEFAULT_SETUP_PARAMETERS,
-  PARAMETER_DEFINITIONS,
-  createDefaultSetupState,
-} from './features/powerlifting/lib/setupParameters'
-
-const LIFT_OPTIONS = Object.keys(liftData)
+import MainLayout from './components/layout/MainLayout';
+import VintageWindow from './components/layout/VintageWindow';
+import Typewriter from './components/effects/Typewriter';
+import AnimationCanvas from './features/powerlifting/components/AnimationCanvas';
+import VintageControlPanel from './features/powerlifting/components/VintageControlPanel';
+import { usePowerlifting } from './features/powerlifting/hooks/usePowerlifting';
+import { PARAMETER_DEFINITIONS, DEFAULT_SETUP_PARAMETERS } from './features/powerlifting/lib/setupParameters';
+import { PAVEL_QUOTES, PAVEL_ASCII_ART } from './features/powerlifting/lib/content';
 
 const App = () => {
-  const [selectedLift, setSelectedLift] = useState(LIFT_OPTIONS[0])
-  const cue = useMemo(
-    () =>
-      `Comrade, breathe deep and crush the handle. The ${selectedLift.toLowerCase()} rewards tension, timing, and ruthless focus.`,
-    [selectedLift],
-  )
+  const {
+    LIFT_OPTIONS,
+    selectedLift,
+    setSelectedLift,
+    activeParameters,
+    kinematics,
+    animation,
+    controls,
+  } = usePowerlifting();
 
-  const [manualOffsets, setManualOffsets] = useState({})
-  const [manualBarOffset, setManualBarOffset] = useState({ x: 0, y: 0 })
-  const [setupParameters, setSetupParameters] = useState(() => createDefaultSetupState(LIFT_OPTIONS))
+  const cue = useMemo(() => {
+    const filteredQuotes = PAVEL_QUOTES.filter(q => q.toLowerCase().includes(selectedLift.toLowerCase()));
+    const quotePool = filteredQuotes.length > 0 ? filteredQuotes : PAVEL_QUOTES;
+    return quotePool[Math.floor(Math.random() * quotePool.length)];
+  }, [selectedLift]);
 
-  useEffect(() => {
-    setManualOffsets({})
-    setManualBarOffset({ x: 0, y: 0 })
-  }, [selectedLift])
-
-  const activeParameters = setupParameters[selectedLift] ?? DEFAULT_SETUP_PARAMETERS[selectedLift] ?? {}
-
-  const { joints: animatedOffsets, barOffset: animatedBarOffset, isPlaying, togglePlay, tempo, setTempo, progress, phase } =
-    useLiftAnimation({ liftType: selectedLift, parameters: activeParameters })
-
-  const combinedOverrides = useMemo(() => {
-    const overrides = {}
-    const jointKeys = new Set([...Object.keys(animatedOffsets ?? {}), ...Object.keys(manualOffsets ?? {})])
-    jointKeys.forEach((joint) => {
-      const totalDegrees = (animatedOffsets?.[joint] ?? 0) + (manualOffsets?.[joint] ?? 0)
-      overrides[joint] = { angleOffset: (totalDegrees * Math.PI) / 180 }
-    })
-
-    const totalBarOffset = {
-      x: (animatedBarOffset?.x ?? 0) + (manualBarOffset?.x ?? 0),
-      y: (animatedBarOffset?.y ?? 0) + (manualBarOffset?.y ?? 0),
-    }
-
-    return {
-      ...overrides,
-      bar: { offset: totalBarOffset },
-    }
-  }, [animatedBarOffset, animatedOffsets, manualBarOffset, manualOffsets])
-
-  const handleAngleOffsetChange = (joint, value) => {
-    setManualOffsets((current) => ({
-      ...current,
-      [joint]: value,
-    }))
-  }
-
-  const handleResetAdjustments = () => {
-    setManualOffsets({})
-    setManualBarOffset({ x: 0, y: 0 })
-  }
-
-  const handleBarOffsetChange = (next) => {
-    setManualBarOffset((current) => ({ ...current, ...next }))
-  }
-
-  const handleSetupParameterChange = (parameter, value) => {
-    setSetupParameters((current) => ({
-      ...current,
-      [selectedLift]: {
-        ...(current[selectedLift] ?? DEFAULT_SETUP_PARAMETERS[selectedLift] ?? {}),
-        [parameter]: value,
-      },
-    }))
-  }
-
-  const handleResetSetupParameters = () => {
-    setSetupParameters((current) => ({
-      ...current,
-      [selectedLift]: { ...(DEFAULT_SETUP_PARAMETERS[selectedLift] ?? {}) },
-    }))
-  }
-
-  const { joints, limbs, barPosition, torque, root, rootPosition, angles, surfaces, sceneBounds } = useKinematics({
-    liftType: selectedLift,
-    jointOverrides: combinedOverrides,
-  })
-
-  const parameterDefinitions = PARAMETER_DEFINITIONS[selectedLift] ?? []
-
-  const layoutControls = (
-    <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.25em] text-black/70">
-      <span className="rounded border border-black/60 bg-black/80 px-2 py-[2px] text-white">{selectedLift}</span>
-      <span className="hidden md:inline">kinematic study in progress</span>
-    </div>
-  )
-
-  const coachNotes = (
-    <div className="space-y-2">
-      <header className="space-y-1">
-        <div className="h-[2px] w-14 bg-black" />
-        <h2 className="text-[10px] uppercase tracking-[0.3em] text-black/70">Coach&apos;s log</h2>
-      </header>
-      <ul className="grid gap-1 text-[11px] text-black/75">
-        <li>Keep the bar stacked over the mid-foot in every view.</li>
-        <li>Drive through stable feet or shoulders—the contact points never wander.</li>
-        <li>Reset your brace between reps; torque cues flare when tension drops.</li>
-      </ul>
-    </div>
-  )
+  const parameterDefinitions = PARAMETER_DEFINITIONS[selectedLift] ?? [];
 
   return (
-    <MainLayout cue={cue} controls={layoutControls} sidebar={coachNotes}>
-      <div className="grid min-h-0 flex-1 gap-3 md:grid-cols-[minmax(0,1.45fr),minmax(0,1fr)]">
-        <div className="min-h-0">
+    <MainLayout>
+      <div className="flex flex-1 min-h-0 gap-4">
+        <VintageWindow title="Animation" className="w-3/5">
           <AnimationCanvas
             title={`${selectedLift} torque study`}
-            joints={joints}
-            limbs={limbs}
-            barPosition={barPosition}
-            rootPosition={rootPosition ?? joints?.[root]}
-            torque={torque}
-            progress={progress}
-            phase={phase}
-            surfaces={surfaces}
-            angles={angles}
-            sceneBounds={sceneBounds}
+            joints={kinematics.joints}
+            limbs={kinematics.limbs}
+            barPosition={kinematics.barPosition}
+            rootPosition={kinematics.rootPosition ?? kinematics.joints?.[kinematics.root]}
+            torque={kinematics.torque}
+            progress={animation.progress}
+            phase={animation.phase}
+            surfaces={kinematics.surfaces}
+            angles={kinematics.angles}
+            sceneBounds={kinematics.sceneBounds}
           />
-        </div>
-        <div className="min-h-0 flex flex-col gap-3">
-          <SetupParameters
-            lift={selectedLift}
-            definitions={parameterDefinitions}
-            values={activeParameters}
-            defaults={DEFAULT_SETUP_PARAMETERS[selectedLift] ?? {}}
-            onChange={handleSetupParameterChange}
-            onReset={handleResetSetupParameters}
-          />
-          <ControlPanel
+        </VintageWindow>
+        <VintageWindow title="Controls" className="w-2/5 flex flex-col gap-4">
+          <VintageControlPanel
             lifts={LIFT_OPTIONS}
             selectedLift={selectedLift}
             onSelectLift={setSelectedLift}
-            torque={torque}
-            angles={angles}
-            manualOffsets={manualOffsets}
-            onAngleOffsetChange={handleAngleOffsetChange}
-            onResetAngles={handleResetAdjustments}
-            onBarOffsetChange={handleBarOffsetChange}
-            barOffset={manualBarOffset}
-            isPlaying={isPlaying}
-            onTogglePlay={togglePlay}
-            tempo={tempo}
-            onTempoChange={setTempo}
-            phaseLabel={phase}
+            definitions={parameterDefinitions}
+            values={activeParameters}
+            defaults={DEFAULT_SETUP_PARAMETERS[selectedLift] ?? {}}
+            onSetupParameterChange={controls.handleSetupParameterChange}
+            onResetSetupParameters={controls.handleResetSetupParameters}
+            isPlaying={animation.isPlaying}
+            onTogglePlay={animation.togglePlay}
+            tempo={animation.tempo}
+            onTempoChange={animation.setTempo}
+            angles={kinematics.angles}
+            manualOffsets={controls.manualOffsets}
+            onAngleOffsetChange={controls.handleAngleOffsetChange}
+            onResetAngles={controls.handleResetAdjustments}
+            barOffset={controls.manualBarOffset}
+            onBarOffsetChange={controls.handleBarOffsetChange}
           />
-        </div>
+        </VintageWindow>
       </div>
+      <VintageWindow title="Coach's Cue" className="h-32 font-mono text-sm">
+        <div className="flex items-center h-full">
+          <pre className="text-xs leading-none">{PAVEL_ASCII_ART}</pre>
+          <div className="flex-1 pl-4">
+            <Typewriter text={cue} />
+          </div>
+        </div>
+      </VintageWindow>
     </MainLayout>
-  )
-}
+  );
+};
 
-export default App
+export default App;

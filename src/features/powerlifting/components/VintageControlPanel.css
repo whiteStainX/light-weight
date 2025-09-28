@@ -1,0 +1,65 @@
+.vintage-control-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  height: 100%;
+  font-family: 'Geneva', sans-serif;
+}
+
+.lift-selector {
+  display: flex;
+  justify-content: space-between;
+  gap: 4px;
+}
+
+.lift-button {
+  flex: 1;
+  padding: 4px;
+  border: 1px solid #000;
+  background-color: #d0d0d0;
+  font-size: 10px;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.lift-button.active {
+  background-color: #000;
+  color: #fff;
+}
+
+.playback-button {
+  padding: 8px 12px;
+  border: 1px solid #000;
+  background-color: #d0d0d0;
+  font-size: 10px;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.vintage-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 5px;
+  background: #000;
+  outline: none;
+  border: 1px solid #000;
+}
+
+.vintage-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 15px;
+  height: 15px;
+  background: #d0d0d0;
+  border: 1px solid #000;
+  cursor: pointer;
+}
+
+.vintage-slider::-moz-range-thumb {
+  width: 15px;
+  height: 15px;
+  background: #d0d0d0;
+  border: 1px solid #000;
+  cursor: pointer;
+}

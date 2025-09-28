@@ -24,4 +24,6 @@ dist-ssr
 *.sw?
 
 # Design files
-# design*
+design*
+# Temporary screenshots
+_temp/

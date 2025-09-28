@@ -1,0 +1,44 @@
+.stepper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #b0b0b0;
+  padding: 2px 4px;
+  border: 1px solid #000;
+  font-family: 'Geneva', sans-serif;
+}
+
+.stepper-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+}
+
+.stepper-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.stepper-button {
+  width: 16px;
+  height: 16px;
+  border: 1px solid #000;
+  background-color: #d0d0d0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-bottom: 2px;
+}
+
+.stepper-button:active {
+  background-color: #a0a0a0;
+}
+
+.stepper-value {
+  font-size: 12px;
+  font-weight: bold;
+  min-width: 30px;
+  text-align: center;
+}
