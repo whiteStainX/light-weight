@@ -1,4 +1,8 @@
-const ControlPanel = ({ lifts, selectedLift, onSelectLift, isPlaying, onTogglePlay, tempo, onTempoChange }) => {
+import Knob from './Knob';
+
+const ControlPanel = ({ lifts, selectedLift, onSelectLift, isPlaying, onTogglePlay, tempo, onTempoChange, angles, manualOffsets, onAngleOffsetChange, onResetAngles, barOffset, onBarOffsetChange }) => {
+  const angleEntries = angles ? Object.entries(angles) : []
+
   return (
     <div className="flex flex-col gap-4">
       <section>
@@ -43,6 +47,54 @@ const ControlPanel = ({ lifts, selectedLift, onSelectLift, isPlaying, onTogglePl
               className="w-full accent-black"
             />
           </div>
+        </div>
+      </section>
+
+      <section>
+        <div className="flex items-center justify-between mb-2">
+            <p className="uppercase tracking-widest text-xs">Joint Tuning</p>
+            <button
+                type="button"
+                onClick={onResetAngles}
+                className="px-2 py-1 text-xs uppercase tracking-widest border border-black bg-gray-300 hover:bg-gray-400"
+            >
+                Reset
+            </button>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          {angleEntries.map(([joint]) => (
+            <Knob
+              key={joint}
+              label={joint}
+              value={manualOffsets?.[joint] ?? 0}
+              onChange={(value) => onAngleOffsetChange(joint, value)}
+              min={-45}
+              max={45}
+              step={1}
+            />
+          ))}
+        </div>
+      </section>
+
+      <section>
+        <p className="uppercase tracking-widest text-xs mb-2">Bar Path</p>
+        <div className="grid grid-cols-2 gap-4">
+            <Knob
+              label="Horizontal"
+              value={barOffset?.x ?? 0}
+              onChange={(value) => onBarOffsetChange({ x: value })}
+              min={-60}
+              max={60}
+              step={1}
+            />
+            <Knob
+              label="Vertical"
+              value={barOffset?.y ?? 0}
+              onChange={(value) => onBarOffsetChange({ y: value })}
+              min={-60}
+              max={60}
+              step={1}
+            />
         </div>
       </section>
     </div>
