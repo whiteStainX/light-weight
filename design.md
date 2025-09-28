@@ -46,6 +46,16 @@ To streamline the architecture and improve biomechanical accuracy, the animation
     *   Converting the manual degree offset to radians before adding it to the animated radian offset.
     *   Adjusting `usePowerlifting.js` to pass `manualOffsets` directly as `manualAngleOffsets`.
 
+### Lift-Specific Kinematics Refinements
+
+**Bench Press:**
+*   **Problem:** The stick figure was static, and the grip did not match the bar's position. This was due to the bar not being explicitly anchored to the `grip` joint in `liftData.js`.
+*   **Solution:** Added an explicit bar anchor to the `grip` joint in `liftData.Bench`. The `solveBench` function in `useLiftAnimation.js` was refined to ensure the `grip` joint's position directly corresponds to the bar's position, allowing `useKinematics` to correctly derive the bar's movement from the anchored joint.
+
+**Deadlift:**
+*   **Problem:** The bar visually cut through the legs, and there was a potential architectural mismatch in how the bar's position was determined when anchored.
+*   **Solution:** Adjusted the horizontal `BAR_X` position in `solveDeadlift` (within `useLiftAnimation.js`) to place the bar slightly in front of the legs, improving biomechanical accuracy and preventing visual overlap. The `useKinematics.js` logic for bar positioning was made more robust: if an anchor is defined, the bar's position is derived from the anchored joint's position plus any manual offset; otherwise, it uses the animated bar position. This ensures correct bar-grip synchronization and consistent behavior across lifts.
+
 ### Folder Structure
 
 ```
