@@ -9,9 +9,9 @@ const createZeroOffsets = (skeleton) =>
   Object.fromEntries(Object.keys(skeleton.defaultAngles).map((joint) => [joint, 0]))
 
 describe('resolveSkeleton', () => {
-  it('detects hip as the squat root joint', () => {
+  it('detects the planted foot as the squat root joint', () => {
     const skeleton = resolveSkeleton('Squat')
-    assert.equal(skeleton.root, 'hip')
+    assert.equal(skeleton.root, 'foot')
   })
 
   it('detects shoulder as the bench root joint', () => {
@@ -43,9 +43,8 @@ describe('computeJointPositions', () => {
     offsets.knee = toRadians(10)
 
     const positions = computeJointPositions(skeleton, offsets, skeleton.basePath[skeleton.root], {})
-    assert.notEqual(Math.round(positions.foot.x), Math.round(skeleton.basePath.foot.x))
-    assert.notEqual(Math.round(positions.foot.y), Math.round(skeleton.basePath.foot.y))
-
+    assert.notEqual(Math.round(positions.hip.x), Math.round(skeleton.basePath.hip.x))
+    assert.notEqual(Math.round(positions.hip.y), Math.round(skeleton.basePath.hip.y))
   })
 })
 
@@ -58,8 +57,9 @@ describe('estimateTorque', () => {
     const neutral = estimateTorque(positions, skeleton.basePath.bar)
     const forward = estimateTorque(positions, { ...skeleton.basePath.bar, x: skeleton.basePath.bar.x + 30 })
 
-
     assert.ok(forward.total > neutral.total)
     assert.ok(forward.perJoint.hip > neutral.perJoint.hip)
+    assert.ok(forward.leverArms.hip.lever > neutral.leverArms.hip.lever)
+    assert.equal(forward.leverArms.hip.direction, 1)
   })
 })

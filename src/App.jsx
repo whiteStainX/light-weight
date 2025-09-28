@@ -3,10 +3,16 @@ import { useEffect, useMemo, useState } from 'react'
 import MainLayout from './components/layout/MainLayout'
 import AnimationCanvas from './features/powerlifting/components/AnimationCanvas'
 import ControlPanel from './features/powerlifting/components/ControlPanel'
+import SetupParameters from './features/powerlifting/components/SetupParameters'
 import { useKinematics } from './features/powerlifting/hooks/useKinematics'
 import { useLiftAnimation } from './features/powerlifting/hooks/useLiftAnimation'
 
 import { liftData } from './features/powerlifting/lib/liftData.js'
+import {
+  DEFAULT_SETUP_PARAMETERS,
+  PARAMETER_DEFINITIONS,
+  createDefaultSetupState,
+} from './features/powerlifting/lib/setupParameters'
 
 const LIFT_OPTIONS = Object.keys(liftData)
 
@@ -20,14 +26,17 @@ const App = () => {
 
   const [manualOffsets, setManualOffsets] = useState({})
   const [manualBarOffset, setManualBarOffset] = useState({ x: 0, y: 0 })
+  const [setupParameters, setSetupParameters] = useState(() => createDefaultSetupState(LIFT_OPTIONS))
 
   useEffect(() => {
     setManualOffsets({})
     setManualBarOffset({ x: 0, y: 0 })
   }, [selectedLift])
 
+  const activeParameters = setupParameters[selectedLift] ?? DEFAULT_SETUP_PARAMETERS[selectedLift] ?? {}
+
   const { joints: animatedOffsets, barOffset: animatedBarOffset, isPlaying, togglePlay, tempo, setTempo, progress, phase } =
-    useLiftAnimation({ liftType: selectedLift })
+    useLiftAnimation({ liftType: selectedLift, parameters: activeParameters })
 
   const combinedOverrides = useMemo(() => {
     const overrides = {}
@@ -64,72 +73,97 @@ const App = () => {
     setManualBarOffset((current) => ({ ...current, ...next }))
   }
 
-  const { joints, limbs, barPosition, torque, root, rootPosition, angles } = useKinematics({
+  const handleSetupParameterChange = (parameter, value) => {
+    setSetupParameters((current) => ({
+      ...current,
+      [selectedLift]: {
+        ...(current[selectedLift] ?? DEFAULT_SETUP_PARAMETERS[selectedLift] ?? {}),
+        [parameter]: value,
+      },
+    }))
+  }
+
+  const handleResetSetupParameters = () => {
+    setSetupParameters((current) => ({
+      ...current,
+      [selectedLift]: { ...(DEFAULT_SETUP_PARAMETERS[selectedLift] ?? {}) },
+    }))
+  }
+
+  const { joints, limbs, barPosition, torque, root, rootPosition, angles, surfaces, sceneBounds } = useKinematics({
     liftType: selectedLift,
     jointOverrides: combinedOverrides,
   })
 
+  const parameterDefinitions = PARAMETER_DEFINITIONS[selectedLift] ?? []
 
   const layoutControls = (
-    <div className="flex items-center gap-3 text-xs uppercase tracking-[0.3em] text-zinc-500">
-      <span className="text-zinc-300">Active lift →</span>
-      <span className="rounded-sm border border-zinc-700 px-3 py-1 text-zinc-100">{selectedLift}</span>
-      <span className="hidden md:inline text-zinc-500">Both views synced to current kinematics.</span>
+    <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.25em] text-black/70">
+      <span className="rounded border border-black/60 bg-black/80 px-2 py-[2px] text-white">{selectedLift}</span>
+      <span className="hidden md:inline">kinematic study in progress</span>
+    </div>
+  )
+
+  const coachNotes = (
+    <div className="space-y-2">
+      <header className="space-y-1">
+        <div className="h-[2px] w-14 bg-black" />
+        <h2 className="text-[10px] uppercase tracking-[0.3em] text-black/70">Coach&apos;s log</h2>
+      </header>
+      <ul className="grid gap-1 text-[11px] text-black/75">
+        <li>Keep the bar stacked over the mid-foot in every view.</li>
+        <li>Drive through stable feet or shoulders—the contact points never wander.</li>
+        <li>Reset your brace between reps; torque cues flare when tension drops.</li>
+      </ul>
     </div>
   )
 
   return (
-    <MainLayout cue={cue} controls={layoutControls} sidebar={
-      <ControlPanel
-        lifts={LIFT_OPTIONS}
-        selectedLift={selectedLift}
-        onSelectLift={setSelectedLift}
-        torque={torque}
-        angles={angles}
-        manualOffsets={manualOffsets}
-        onAngleOffsetChange={handleAngleOffsetChange}
-        onResetAngles={handleResetAdjustments}
-        onBarOffsetChange={handleBarOffsetChange}
-        barOffset={manualBarOffset}
-        isPlaying={isPlaying}
-        onTogglePlay={togglePlay}
-        tempo={tempo}
-        onTempoChange={setTempo}
-        phaseLabel={phase}
-      />
-    }>
-      <div className="grid gap-6 lg:grid-cols-2">
-        <AnimationCanvas
-          title={`${selectedLift} mechanics`}
-          joints={joints}
-          limbs={limbs}
-          barPosition={barPosition}
-          variant="side"
-          rootPosition={rootPosition ?? joints?.[root]}
-          torque={torque}
-          progress={progress}
-          phase={phase}
-        />
-        <AnimationCanvas
-          title={`${selectedLift} structure`}
-          joints={joints}
-          limbs={limbs}
-          barPosition={barPosition}
-          variant="front"
-          rootPosition={rootPosition ?? joints?.[root]}
-          torque={torque}
-          progress={progress}
-          phase={phase}
-
-        />
+    <MainLayout cue={cue} controls={layoutControls} sidebar={coachNotes}>
+      <div className="grid min-h-0 flex-1 gap-3 md:grid-cols-[minmax(0,1.45fr),minmax(0,1fr)]">
+        <div className="min-h-0">
+          <AnimationCanvas
+            title={`${selectedLift} torque study`}
+            joints={joints}
+            limbs={limbs}
+            barPosition={barPosition}
+            rootPosition={rootPosition ?? joints?.[root]}
+            torque={torque}
+            progress={progress}
+            phase={phase}
+            surfaces={surfaces}
+            angles={angles}
+            sceneBounds={sceneBounds}
+          />
+        </div>
+        <div className="min-h-0 flex flex-col gap-3">
+          <SetupParameters
+            lift={selectedLift}
+            definitions={parameterDefinitions}
+            values={activeParameters}
+            defaults={DEFAULT_SETUP_PARAMETERS[selectedLift] ?? {}}
+            onChange={handleSetupParameterChange}
+            onReset={handleResetSetupParameters}
+          />
+          <ControlPanel
+            lifts={LIFT_OPTIONS}
+            selectedLift={selectedLift}
+            onSelectLift={setSelectedLift}
+            torque={torque}
+            angles={angles}
+            manualOffsets={manualOffsets}
+            onAngleOffsetChange={handleAngleOffsetChange}
+            onResetAngles={handleResetAdjustments}
+            onBarOffsetChange={handleBarOffsetChange}
+            barOffset={manualBarOffset}
+            isPlaying={isPlaying}
+            onTogglePlay={togglePlay}
+            tempo={tempo}
+            onTempoChange={setTempo}
+            phaseLabel={phase}
+          />
+        </div>
       </div>
-      <section className="rounded-md border border-zinc-800 bg-zinc-900/50 p-6 text-sm leading-relaxed text-zinc-300 shadow-[0_0_0_1px_rgba(255,255,255,0.08)]">
-        <h2 className="mb-2 text-xs uppercase tracking-[0.3em] text-zinc-500">Coach&apos;s cue</h2>
-        <p>
-          Hold power in reserve until the moment of truth. Maintain the wedge, drive with intent, and remember:
-          strength is patience under load. Light weight, baby—because discipline makes it so.
-        </p>
-      </section>
     </MainLayout>
   )
 }

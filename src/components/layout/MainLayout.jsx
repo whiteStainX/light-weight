@@ -1,26 +1,31 @@
 const MainLayout = ({ children, cue, controls, sidebar }) => {
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100">
-      <div className="mx-auto flex min-h-screen max-w-6xl flex-col gap-10 px-6 py-10">
-        <header className="space-y-6 border-b border-zinc-800 pb-6">
-          <div className="space-y-2">
-            <p className="text-xs uppercase tracking-[0.4em] text-zinc-500">Light Weight Baby</p>
-            <h1 className="text-4xl font-semibold tracking-tight text-zinc-100">
-              Precision strength illustration suite
-            </h1>
-            <p className="max-w-3xl text-sm text-zinc-400">
-              {cue}
-            </p>
+    <div className="h-dvh w-full overflow-hidden bg-[#e5e5e5] text-[#0c0c0c]">
+      <div className="mx-auto flex h-full max-w-5xl flex-col gap-3 px-4 py-4">
+        <header className="rounded border border-black/40 bg-white px-4 py-4 shadow-[2px_2px_0_0_rgba(0,0,0,0.45)]">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div className="space-y-1">
+              <p className="text-[10px] uppercase tracking-[0.35em] text-black/60">Light Weight Baby</p>
+              <h1 className="text-xl font-semibold tracking-[0.08em] text-black">Biomechanics Console</h1>
+              <p className="max-w-xl text-[11px] leading-snug text-black/75">{cue}</p>
+            </div>
+            {controls && (
+              <div className="shrink-0 rounded border border-black/30 bg-[#f5f5f5] px-3 py-2 text-[10px] uppercase tracking-[0.3em] text-black/70">
+                {controls}
+              </div>
+            )}
           </div>
-          {controls && <div className="flex flex-wrap items-center gap-3 text-sm text-zinc-300">{controls}</div>}
         </header>
 
-        <div className="grid flex-1 gap-8 lg:grid-cols-[minmax(0,2fr),minmax(0,1fr)]">
-          <main className="space-y-6">{children}</main>
-          {sidebar && <aside className="lg:sticky lg:top-10">{sidebar}</aside>}
-        </div>
+        {sidebar && (
+          <section className="rounded border border-black/40 bg-white px-4 py-3 text-[11px] leading-relaxed text-black shadow-[2px_2px_0_0_rgba(0,0,0,0.35)]">
+            {sidebar}
+          </section>
+        )}
 
-        <footer className="border-t border-zinc-800 pt-4 text-[11px] uppercase tracking-[0.3em] text-zinc-600">
+        <main className="flex min-h-0 flex-1 flex-col overflow-hidden">{children}</main>
+
+        <footer className="rounded border border-black/40 bg-white px-4 py-2 text-[9px] uppercase tracking-[0.3em] text-black/70 shadow-[2px_2px_0_0_rgba(0,0,0,0.45)]">
           Strength is a skill—practice with intent, comrade.
         </footer>
       </div>
