@@ -106,9 +106,9 @@ const AnimationCanvas = ({
   const torqueGlyphs = useMemo(() => buildTorqueGlyphs(joints, barPosition, torque), [barPosition, joints, torque])
   const trackedJoints = useMemo(() => Object.keys(joints ?? {}), [joints])
 
-  const groundY = surfaces.ground ?? CANVAS_HEIGHT - 12
-  const benchTop = surfaces.benchTop
-  const benchHeight = surfaces.benchHeight ?? 28
+  // const groundY = surfaces.ground ?? CANVAS_HEIGHT - 12
+  // const benchTop = surfaces.benchTop
+  // const benchHeight = surfaces.benchHeight ?? 28
 
   const highlightedJoints = trackedJoints.filter((joint) => KEY_JOINTS.has(joint))
 
