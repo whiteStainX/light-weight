@@ -2,8 +2,90 @@
 import { useMemo } from 'react'
 import { liftData } from '../lib/liftData.js'
 
+const SCENE_PADDING_X = 120
+const SCENE_PADDING_Y = 140
+const MIN_SCENE_WIDTH = 420
+const MIN_SCENE_HEIGHT = 420
+const BAR_HALF_SPAN = 60
+
 const toRadians = (degrees) => (degrees * Math.PI) / 180
 const toDegrees = (radians) => (radians * 180) / Math.PI
+
+const computeSceneFrame = (path = {}, anchors = {}, surfaces = {}) => {
+  let minX = Infinity
+  let maxX = -Infinity
+  let minY = Infinity
+  let maxY = -Infinity
+
+  const includePoint = (x, y) => {
+    if (!Number.isFinite(x) || !Number.isFinite(y)) return
+    minX = Math.min(minX, x)
+    maxX = Math.max(maxX, x)
+    minY = Math.min(minY, y)
+    maxY = Math.max(maxY, y)
+  }
+
+  Object.values(path).forEach(({ x, y }) => includePoint(x, y))
+
+  if (path.bar) {
+    includePoint(path.bar.x - BAR_HALF_SPAN, path.bar.y)
+    includePoint(path.bar.x + BAR_HALF_SPAN, path.bar.y)
+  }
+
+  const barAnchor = anchors?.bar
+  if (barAnchor?.joint && path[barAnchor.joint]) {
+    const base = path[barAnchor.joint]
+    const offset = barAnchor.offset ?? { x: 0, y: 0 }
+    const anchorPoint = { x: base.x + (offset.x ?? 0), y: base.y + (offset.y ?? 0) }
+    includePoint(anchorPoint.x - BAR_HALF_SPAN, anchorPoint.y)
+    includePoint(anchorPoint.x + BAR_HALF_SPAN, anchorPoint.y)
+    includePoint(anchorPoint.x, anchorPoint.y)
+  }
+
+  if (typeof surfaces.ground === 'number') {
+    includePoint(path.bar?.x ?? 0, surfaces.ground)
+  }
+
+  if (typeof surfaces.benchTop === 'number') {
+    includePoint(path.bar?.x ?? 0, surfaces.benchTop)
+    includePoint(path.bar?.x ?? 0, surfaces.benchTop + (surfaces.benchHeight ?? 0))
+  }
+
+  if (!Number.isFinite(minX) || !Number.isFinite(minY) || !Number.isFinite(maxX) || !Number.isFinite(maxY)) {
+    return {
+      minX: -MIN_SCENE_WIDTH / 2,
+      maxX: MIN_SCENE_WIDTH / 2,
+      minY: -MIN_SCENE_HEIGHT / 2,
+      maxY: MIN_SCENE_HEIGHT / 2,
+    }
+  }
+
+  let expandedMinX = minX - SCENE_PADDING_X
+  let expandedMaxX = maxX + SCENE_PADDING_X
+  let expandedMinY = minY - SCENE_PADDING_Y
+  let expandedMaxY = maxY + SCENE_PADDING_Y
+
+  const width = expandedMaxX - expandedMinX
+  if (width < MIN_SCENE_WIDTH) {
+    const pad = (MIN_SCENE_WIDTH - width) / 2
+    expandedMinX -= pad
+    expandedMaxX += pad
+  }
+
+  const height = expandedMaxY - expandedMinY
+  if (height < MIN_SCENE_HEIGHT) {
+    const pad = (MIN_SCENE_HEIGHT - height) / 2
+    expandedMinY -= pad
+    expandedMaxY += pad
+  }
+
+  return {
+    minX: expandedMinX,
+    maxX: expandedMaxX,
+    minY: expandedMinY,
+    maxY: expandedMaxY,
+  }
+}
 
 const resolveSkeleton = (liftType) => {
   const data = liftData[liftType] ?? liftData.Squat
@@ -31,6 +113,8 @@ const resolveSkeleton = (liftType) => {
   const potentialRoots = limbs.map(({ from }) => from)
   const root = potentialRoots.find((candidate) => !(candidate in parentMap)) ?? limbs[0]?.from
 
+  const sceneBounds = computeSceneFrame(path, anchors, surfaces)
+
   return {
     basePath: path,
     limbs,
@@ -42,6 +126,7 @@ const resolveSkeleton = (liftType) => {
     anchors,
     surfaces,
     frontProfile,
+    sceneBounds,
   }
 }
 
@@ -211,5 +296,6 @@ export const useKinematics = ({ liftType = 'Squat', jointOverrides = {} } = {}) 
     angles,
     surfaces: skeleton.surfaces,
     frontProfile: skeleton.frontProfile,
+    sceneBounds: skeleton.sceneBounds,
   }
 }

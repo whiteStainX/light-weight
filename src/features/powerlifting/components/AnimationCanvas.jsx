@@ -189,13 +189,28 @@ const AnimationCanvas = ({
   phase,
   surfaces = {},
   angles,
+  sceneBounds,
 }) => {
-  const viewBounds = useMemo(() => computeSceneBounds(joints, barPosition, surfaces), [joints, barPosition, surfaces])
+  const fallbackBounds = useMemo(
+    () =>
+      sceneBounds ?? {
+        minX: 0,
+        maxX: MIN_SCENE_WIDTH,
+        minY: 0,
+        maxY: MIN_SCENE_HEIGHT,
+      },
+    [sceneBounds],
+  )
+
+  const viewBounds = useMemo(() => {
+    if (sceneBounds) return sceneBounds
+    return computeSceneBounds(joints, barPosition, surfaces)
+  }, [barPosition, joints, sceneBounds, surfaces])
   const viewWidth = viewBounds.maxX - viewBounds.minX
   const viewHeight = viewBounds.maxY - viewBounds.minY
 
   const gridLines = useMemo(() => buildGridLines(viewBounds), [viewBounds])
-  const barX = barPosition?.x ?? (viewBounds.minX + viewBounds.maxX) / 2
+  const barX = barPosition?.x ?? (fallbackBounds.minX + fallbackBounds.maxX) / 2
   const torqueGlyphs = useMemo(
     () => buildTorqueGlyphs(joints, barPosition, torque, viewBounds),
     [barPosition, joints, torque, viewBounds],
@@ -212,7 +227,7 @@ const AnimationCanvas = ({
   const benchX = clamp(viewBounds.minX + viewWidth * 0.18, viewBounds.minX, viewBounds.maxX - benchWidth)
 
   return (
-    <div className="flex flex-col gap-3 rounded border border-black/20 bg-white px-4 py-3 text-black shadow-[4px_4px_0_0_rgba(0,0,0.12)]">
+    <div className="flex h-full min-h-0 flex-col gap-3 rounded border border-black/20 bg-white px-4 py-3 text-black shadow-[4px_4px_0_0_rgba(0,0,0,0.12)]">
       <header className="flex items-end justify-between text-[11px] uppercase tracking-[0.3em] text-black/60">
         <div>
           <p className="text-black">{title}</p>
@@ -227,11 +242,10 @@ const AnimationCanvas = ({
       </header>
       <svg
         viewBox={`${viewBounds.minX.toFixed(2)} ${viewBounds.minY.toFixed(2)} ${viewWidth.toFixed(2)} ${viewHeight.toFixed(2)}`}
-        className="w-full max-w-full rounded border border-black/10 bg-[#fdfdf7]"
+        className="h-full min-h-0 w-full flex-1 rounded border border-black/10 bg-[#fdfdf7]"
         role="img"
         aria-label={`${title} single-view diagram`}
         preserveAspectRatio="xMidYMid meet"
-        style={{ aspectRatio: `${viewWidth.toFixed(2)} / ${viewHeight.toFixed(2)}` }}
       >
         {gridLines.map((line, index) =>
           line.type === 'horizontal' ? (

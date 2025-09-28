@@ -64,7 +64,7 @@ const App = () => {
     setManualBarOffset((current) => ({ ...current, ...next }))
   }
 
-  const { joints, limbs, barPosition, torque, root, rootPosition, angles, surfaces } = useKinematics({
+  const { joints, limbs, barPosition, torque, root, rootPosition, angles, surfaces, sceneBounds } = useKinematics({
     liftType: selectedLift,
     jointOverrides: combinedOverrides,
   })
@@ -100,19 +100,22 @@ const App = () => {
         />
       }
     >
-      <AnimationCanvas
-        title={`${selectedLift} torque study`}
-        joints={joints}
-        limbs={limbs}
-        barPosition={barPosition}
-        rootPosition={rootPosition ?? joints?.[root]}
-        torque={torque}
-        progress={progress}
-        phase={phase}
-        surfaces={surfaces}
-        angles={angles}
-      />
-      <section className="rounded border border-black/20 bg-white px-4 py-3 text-xs leading-relaxed text-black/70 shadow-[4px_4px_0_0_rgba(0,0,0,0.12)]">
+      <div className="flex min-h-0 flex-1">
+        <AnimationCanvas
+          title={`${selectedLift} torque study`}
+          joints={joints}
+          limbs={limbs}
+          barPosition={barPosition}
+          rootPosition={rootPosition ?? joints?.[root]}
+          torque={torque}
+          progress={progress}
+          phase={phase}
+          surfaces={surfaces}
+          angles={angles}
+          sceneBounds={sceneBounds}
+        />
+      </div>
+      <section className="shrink-0 rounded border border-black/20 bg-white px-4 py-3 text-[11px] leading-relaxed text-black/70 shadow-[4px_4px_0_0_rgba(0,0,0,0.12)]">
         <h2 className="mb-2 text-[11px] uppercase tracking-[0.35em] text-black/60">Coach&apos;s log</h2>
         <ul className="grid gap-1 text-[11px]">
           <li>Align the bar over the mid-foot at all times; torque arrows will flare when it drifts.</li>
