@@ -8,7 +8,7 @@ const MIN_SCENE_WIDTH = 420
 const MIN_SCENE_HEIGHT = 420
 const BAR_HALF_SPAN = 60
 
-const toRadians = (degrees) => (degrees * Math.PI) / 180
+export const toRadians = (degrees) => (degrees * Math.PI) / 180
 const toDegrees = (radians) => (radians * 180) / Math.PI
 
 const computeSceneFrame = (path = {}, anchors = {}, surfaces = {}) => {
@@ -219,28 +219,29 @@ export const __testing__ = {
   toDegrees,
 }
 
-export const useKinematics = ({ liftType = 'Squat', jointOverrides = {} } = {}) => {
+export const useKinematics = ({ liftType = 'Squat', manualJointOverrides = {}, animatedAngleOffsets = {}, animatedBarPosition = { x: 0, y: 0 } } = {}) => {
   const skeleton = useMemo(() => resolveSkeleton(liftType), [liftType])
 
   const rootPosition = useMemo(() => {
-    const overridePosition = jointOverrides[skeleton.root]?.position
+    const overridePosition = manualJointOverrides[skeleton.root]?.position
     return overridePosition ? { ...overridePosition } : { ...skeleton.basePath[skeleton.root] }
-  }, [jointOverrides, skeleton.basePath, skeleton.root])
+  }, [manualJointOverrides, skeleton.basePath, skeleton.root])
 
-  const angleOffsets = useMemo(() => {
+  const combinedAngleOffsets = useMemo(() => {
     const offsets = {}
     Object.keys(skeleton.defaultAngles).forEach((joint) => {
-      const overrideOffset = jointOverrides[joint]?.angleOffset ?? 0
-      offsets[joint] = overrideOffset
+      const manualOffset = manualJointOverrides[joint]?.angleOffset ?? 0
+      const animatedOffset = animatedAngleOffsets[joint] ?? 0
+      offsets[joint] = manualOffset + animatedOffset
     })
     return offsets
-  }, [jointOverrides, skeleton.defaultAngles])
+  }, [animatedAngleOffsets, manualJointOverrides, skeleton.defaultAngles])
 
-  const barOffset = useMemo(() => jointOverrides.bar?.offset ?? { x: 0, y: 0 }, [jointOverrides])
+  const manualBarOffset = useMemo(() => manualJointOverrides.bar?.offset ?? { x: 0, y: 0 }, [manualJointOverrides])
 
   const joints = useMemo(
-    () => computeJointPositions(skeleton, angleOffsets, rootPosition, jointOverrides),
-    [angleOffsets, jointOverrides, rootPosition, skeleton],
+    () => computeJointPositions(skeleton, combinedAngleOffsets, rootPosition, manualJointOverrides),
+    [combinedAngleOffsets, manualJointOverrides, rootPosition, skeleton],
   )
 
   const barBase = useMemo(() => {
@@ -261,20 +262,20 @@ export const useKinematics = ({ liftType = 'Squat', jointOverrides = {} } = {}) 
     return { x: rootPosition.x, y: rootPosition.y }
   }, [joints, rootPosition.x, rootPosition.y, skeleton.anchors?.bar, skeleton.basePath.bar])
 
-  const barPosition = useMemo(
+  const finalBarPosition = useMemo(
     () => ({
-      x: barBase.x + (barOffset.x ?? 0),
-      y: barBase.y + (barOffset.y ?? 0),
+      x: animatedBarPosition.x + (manualBarOffset.x ?? 0),
+      y: animatedBarPosition.y + (manualBarOffset.y ?? 0),
     }),
-    [barBase.x, barBase.y, barOffset.x, barOffset.y],
+    [animatedBarPosition.x, animatedBarPosition.y, manualBarOffset.x, manualBarOffset.y],
   )
 
-  const torque = useMemo(() => estimateTorque(joints, barPosition), [barPosition, joints])
+  const torque = useMemo(() => estimateTorque(joints, finalBarPosition), [finalBarPosition, joints])
 
   const angles = useMemo(() => {
     const entries = {}
     Object.entries(skeleton.defaultAngles).forEach(([joint, baseAngle]) => {
-      const offset = angleOffsets[joint] ?? 0
+      const offset = combinedAngleOffsets[joint] ?? 0
       entries[joint] = {
         base: Number(toDegrees(baseAngle).toFixed(1)),
         offset: Number(toDegrees(offset).toFixed(1)),
@@ -282,17 +283,17 @@ export const useKinematics = ({ liftType = 'Squat', jointOverrides = {} } = {}) 
       }
     })
     return entries
-  }, [angleOffsets, skeleton.defaultAngles])
+  }, [combinedAngleOffsets, skeleton.defaultAngles])
 
   return {
     joints,
     limbs: skeleton.limbs,
-    barPosition,
-    barOffset,
+    barPosition: finalBarPosition,
+    barOffset: manualBarOffset,
     torque,
     root: skeleton.root,
     rootPosition,
-    angleOffsets,
+    angleOffsets: combinedAngleOffsets,
     angles,
     surfaces: skeleton.surfaces,
     frontProfile: skeleton.frontProfile,
