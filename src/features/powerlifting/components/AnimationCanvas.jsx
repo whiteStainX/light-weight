@@ -2,38 +2,56 @@ import { useMemo } from 'react'
 
 import StickFigure from './StickFigure'
 
-const CANVAS_WIDTH = 380
-const CANVAS_HEIGHT = 320
 const GRID_STEP = 32
+const BAR_HALF_SPAN = 60
+const SCENE_PADDING_X = 72
+const SCENE_PADDING_Y = 96
+const MIN_SCENE_WIDTH = 360
+const MIN_SCENE_HEIGHT = 360
 const KEY_JOINTS = new Set(['foot', 'knee', 'hip', 'shoulder', 'elbow', 'grip'])
 
-const buildGridLines = () => {
+const clamp = (value, min, max) => Math.min(Math.max(value, min), max)
+
+const buildGridLines = (bounds) => {
+  if (!bounds) return []
+
   const lines = []
-  for (let x = GRID_STEP; x < CANVAS_WIDTH; x += GRID_STEP) {
-    lines.push({ type: 'vertical', offset: x })
+  const startX = Math.floor(bounds.minX / GRID_STEP) * GRID_STEP
+  for (let x = startX; x <= bounds.maxX; x += GRID_STEP) {
+    lines.push({ type: 'vertical', position: x })
   }
-  for (let y = GRID_STEP; y < CANVAS_HEIGHT; y += GRID_STEP) {
-    lines.push({ type: 'horizontal', offset: y })
+
+  const startY = Math.floor(bounds.minY / GRID_STEP) * GRID_STEP
+  for (let y = startY; y <= bounds.maxY; y += GRID_STEP) {
+    lines.push({ type: 'horizontal', position: y })
   }
+
   return lines
 }
 
 const formatTorque = (value) => `${value >= 0 ? '+' : ''}${value.toFixed(2)}`
 
-const buildTorqueGlyphs = (joints, barPosition, torque) => {
+const buildTorqueGlyphs = (joints, barPosition, torque, bounds) => {
   if (!joints || !barPosition || !torque?.leverArms) {
     return []
-
   }
 
   const barX = barPosition.x
 
+  const labelMargins = {
+    minX: bounds ? bounds.minX + 24 : Number.NEGATIVE_INFINITY,
+    maxX: bounds ? bounds.maxX - 24 : Number.POSITIVE_INFINITY,
+    minY: bounds ? bounds.minY + 24 : Number.NEGATIVE_INFINITY,
+    maxY: bounds ? bounds.maxY - 24 : Number.POSITIVE_INFINITY,
+  }
+
   return Object.entries(torque.leverArms)
     .filter(([joint]) => KEY_JOINTS.has(joint) && joints[joint])
-    .map(([joint, data]) => {
+    .map(([joint]) => {
       const point = joints[joint]
       const span = barX - point.x
       const spanMagnitude = Math.abs(span)
+
       if (spanMagnitude < 1) {
         return {
           joint,
@@ -42,7 +60,10 @@ const buildTorqueGlyphs = (joints, barPosition, torque) => {
           arrowPath: null,
           label: `${formatTorque(torque.perJoint[joint] ?? 0)} Nm`,
           leverLabel: 'Neutral',
-          labelPos: { x: point.x + 16, y: point.y - 12 },
+          labelPos: {
+            x: clamp(point.x + 16, labelMargins.minX, labelMargins.maxX),
+            y: clamp(point.y - 12, labelMargins.minY, labelMargins.maxY),
+          },
         }
       }
 
@@ -78,15 +99,83 @@ const buildTorqueGlyphs = (joints, barPosition, torque) => {
         },
         arcPath: `M ${startPoint.x.toFixed(2)} ${startPoint.y.toFixed(2)} A ${radius.toFixed(2)} ${radius
           .toFixed(2)} 0 0 ${sweepFlag} ${endPoint.x.toFixed(2)} ${endPoint.y.toFixed(2)}`,
-        arrowPath: `M ${endPoint.x.toFixed(2)} ${endPoint.y.toFixed(2)} L ${wingLeft.x.toFixed(2)} ${wingLeft.y.toFixed(2)} M ${endPoint.x.toFixed(2)} ${endPoint.y.toFixed(2)} L ${wingRight.x.toFixed(2)} ${wingRight.y.toFixed(2)}`,
+        arrowPath: `M ${endPoint.x.toFixed(2)} ${endPoint.y.toFixed(2)} L ${wingLeft.x.toFixed(2)} ${wingLeft.y.toFixed(2)} M ${
+endPoint.x.toFixed(2)} ${endPoint.y.toFixed(2)} L ${wingRight.x.toFixed(2)} ${wingRight.y.toFixed(2)}`,
         label: `${formatTorque(torque.perJoint[joint] ?? 0)} Nm`,
         leverLabel: `${direction > 0 ? 'CW' : 'CCW'} ${spanMagnitude.toFixed(0)}px`,
         labelPos: {
-          x: point.x + span / 2,
-          y: point.y - (direction > 0 ? 14 : 28),
+          x: clamp(point.x + span / 2, labelMargins.minX, labelMargins.maxX),
+          y: clamp(point.y - (direction > 0 ? 14 : 28), labelMargins.minY, labelMargins.maxY),
         },
       }
     })
+}
+
+const computeSceneBounds = (joints = {}, barPosition, surfaces = {}) => {
+  let minX = Infinity
+  let maxX = -Infinity
+  let minY = Infinity
+  let maxY = -Infinity
+
+  const includePoint = (x, y) => {
+    if (!Number.isFinite(x) || !Number.isFinite(y)) return
+    minX = Math.min(minX, x)
+    maxX = Math.max(maxX, x)
+    minY = Math.min(minY, y)
+    maxY = Math.max(maxY, y)
+  }
+
+  Object.values(joints).forEach(({ x, y }) => includePoint(x, y))
+
+  if (barPosition) {
+    includePoint(barPosition.x, barPosition.y)
+    includePoint(barPosition.x - BAR_HALF_SPAN, barPosition.y)
+    includePoint(barPosition.x + BAR_HALF_SPAN, barPosition.y)
+  }
+
+  if (typeof surfaces.ground === 'number') {
+    includePoint(barPosition?.x ?? 0, surfaces.ground)
+  }
+
+  if (typeof surfaces.benchTop === 'number') {
+    includePoint(barPosition?.x ?? 0, surfaces.benchTop)
+    includePoint(barPosition?.x ?? 0, surfaces.benchTop + (surfaces.benchHeight ?? 0))
+  }
+
+  if (!Number.isFinite(minX) || !Number.isFinite(minY) || !Number.isFinite(maxX) || !Number.isFinite(maxY)) {
+    return {
+      minX: 0,
+      maxX: MIN_SCENE_WIDTH,
+      minY: 0,
+      maxY: MIN_SCENE_HEIGHT,
+    }
+  }
+
+  let expandedMinX = minX - SCENE_PADDING_X
+  let expandedMaxX = maxX + SCENE_PADDING_X
+  let expandedMinY = minY - SCENE_PADDING_Y
+  let expandedMaxY = maxY + SCENE_PADDING_Y
+
+  const width = expandedMaxX - expandedMinX
+  if (width < MIN_SCENE_WIDTH) {
+    const pad = (MIN_SCENE_WIDTH - width) / 2
+    expandedMinX -= pad
+    expandedMaxX += pad
+  }
+
+  const height = expandedMaxY - expandedMinY
+  if (height < MIN_SCENE_HEIGHT) {
+    const pad = (MIN_SCENE_HEIGHT - height) / 2
+    expandedMinY -= pad
+    expandedMaxY += pad
+  }
+
+  return {
+    minX: expandedMinX,
+    maxX: expandedMaxX,
+    minY: expandedMinY,
+    maxY: expandedMaxY,
+  }
 }
 
 const AnimationCanvas = ({
@@ -101,23 +190,29 @@ const AnimationCanvas = ({
   surfaces = {},
   angles,
 }) => {
-  const gridLines = useMemo(() => buildGridLines(), [])
-  const barX = barPosition?.x ?? CANVAS_WIDTH / 2
-  const torqueGlyphs = useMemo(() => buildTorqueGlyphs(joints, barPosition, torque), [barPosition, joints, torque])
+  const viewBounds = useMemo(() => computeSceneBounds(joints, barPosition, surfaces), [joints, barPosition, surfaces])
+  const viewWidth = viewBounds.maxX - viewBounds.minX
+  const viewHeight = viewBounds.maxY - viewBounds.minY
+
+  const gridLines = useMemo(() => buildGridLines(viewBounds), [viewBounds])
+  const barX = barPosition?.x ?? (viewBounds.minX + viewBounds.maxX) / 2
+  const torqueGlyphs = useMemo(
+    () => buildTorqueGlyphs(joints, barPosition, torque, viewBounds),
+    [barPosition, joints, torque, viewBounds],
+  )
   const trackedJoints = useMemo(() => Object.keys(joints ?? {}), [joints])
-
-  // const groundY = surfaces.ground ?? CANVAS_HEIGHT - 12
-  // const benchTop = surfaces.benchTop
-  // const benchHeight = surfaces.benchHeight ?? 28
-
-  const highlightedJoints = trackedJoints.filter((joint) => KEY_JOINTS.has(joint))
 
   const groundY = surfaces.ground
   const benchTop = surfaces.benchTop
-  const benchHeight = surfaces.benchHeight ?? 32
+  const benchHeight = surfaces.benchHeight ?? 28
+
+  const highlightedJoints = trackedJoints.filter((joint) => KEY_JOINTS.has(joint))
+
+  const benchWidth = Math.min(viewWidth * 0.64, viewWidth)
+  const benchX = clamp(viewBounds.minX + viewWidth * 0.18, viewBounds.minX, viewBounds.maxX - benchWidth)
 
   return (
-    <div className="flex flex-col gap-3 rounded border border-black/20 bg-white px-4 py-3 text-black shadow-[4px_4px_0_0_rgba(0,0,0,0.12)]">
+    <div className="flex flex-col gap-3 rounded border border-black/20 bg-white px-4 py-3 text-black shadow-[4px_4px_0_0_rgba(0,0,0.12)]">
       <header className="flex items-end justify-between text-[11px] uppercase tracking-[0.3em] text-black/60">
         <div>
           <p className="text-black">{title}</p>
@@ -131,29 +226,31 @@ const AnimationCanvas = ({
         )}
       </header>
       <svg
-        viewBox={`0 0 ${CANVAS_WIDTH} ${CANVAS_HEIGHT}`}
-        className="h-[320px] w-full rounded border border-black/10 bg-[#fdfdf7]"
+        viewBox={`${viewBounds.minX.toFixed(2)} ${viewBounds.minY.toFixed(2)} ${viewWidth.toFixed(2)} ${viewHeight.toFixed(2)}`}
+        className="w-full max-w-full rounded border border-black/10 bg-[#fdfdf7]"
         role="img"
         aria-label={`${title} single-view diagram`}
+        preserveAspectRatio="xMidYMid meet"
+        style={{ aspectRatio: `${viewWidth.toFixed(2)} / ${viewHeight.toFixed(2)}` }}
       >
         {gridLines.map((line, index) =>
           line.type === 'horizontal' ? (
             <line
               key={`h-${index}`}
-              x1={0}
-              y1={line.offset}
-              x2={CANVAS_WIDTH}
-              y2={line.offset}
+              x1={viewBounds.minX}
+              y1={line.position}
+              x2={viewBounds.maxX}
+              y2={line.position}
               stroke="rgba(0,0,0,0.08)"
               strokeWidth={1}
             />
           ) : (
             <line
               key={`v-${index}`}
-              x1={line.offset}
-              y1={0}
-              x2={line.offset}
-              y2={CANVAS_HEIGHT}
+              x1={line.position}
+              y1={viewBounds.minY}
+              x2={line.position}
+              y2={viewBounds.maxY}
               stroke="rgba(0,0,0,0.08)"
               strokeWidth={1}
             />
@@ -162,23 +259,29 @@ const AnimationCanvas = ({
 
         <line
           x1={barX}
-          y1={0}
+          y1={viewBounds.minY}
           x2={barX}
-          y2={CANVAS_HEIGHT}
+          y2={viewBounds.maxY}
           stroke="black"
           strokeWidth={1.5}
           strokeDasharray="6 6"
         />
 
         {typeof groundY === 'number' && (
-          <rect x={0} y={groundY} width={CANVAS_WIDTH} height={CANVAS_HEIGHT - groundY} fill="rgba(0,0,0,0.05)" />
+          <rect
+            x={viewBounds.minX}
+            y={groundY}
+            width={viewWidth}
+            height={Math.max(0, viewBounds.maxY - groundY)}
+            fill="rgba(0,0,0,0.05)"
+          />
         )}
 
         {typeof benchTop === 'number' && (
           <rect
-            x={CANVAS_WIDTH * 0.18}
+            x={benchX}
             y={benchTop}
-            width={CANVAS_WIDTH * 0.64}
+            width={benchWidth}
             height={benchHeight}
             fill="rgba(0,0,0,0.05)"
             stroke="black"
@@ -223,9 +326,9 @@ const AnimationCanvas = ({
         {barPosition && (
           <g>
             <line
-              x1={barPosition.x - 60}
+              x1={barPosition.x - BAR_HALF_SPAN}
               y1={barPosition.y}
-              x2={barPosition.x + 60}
+              x2={barPosition.x + BAR_HALF_SPAN}
               y2={barPosition.y}
               stroke="black"
               strokeWidth={3}

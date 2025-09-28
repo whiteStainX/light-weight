@@ -1,11 +1,11 @@
 export const liftData = {
   Squat: {
     path: {
-      foot: { x: 210, y: 440 },
-      knee: { x: 210, y: 340 },
-      hip: { x: 210, y: 250 },
-      shoulder: { x: 210, y: 170 },
-      bar: { x: 210, y: 160 },
+      foot: { x: 400, y: 500 },
+      knee: { x: 440, y: 336.8313755650309 },
+      hip: { x: 312, y: 240.8313755650309 },
+      shoulder: { x: 408, y: 88.56844507963666 },
+      bar: { x: 400, y: 88.56844507963666 },
     },
     limbs: [
       { from: 'foot', to: 'knee' },
@@ -13,10 +13,10 @@ export const liftData = {
       { from: 'hip', to: 'shoulder' },
     ],
     anchors: {
-      bar: { joint: 'shoulder', offset: { x: 0, y: -10 } },
+      bar: { joint: 'shoulder', offset: { x: -8, y: 0 } },
     },
     surfaces: {
-      ground: 440,
+      ground: 500,
     },
     frontProfile: {
       fallbackWidth: 48,
@@ -32,10 +32,10 @@ export const liftData = {
   },
   Bench: {
     path: {
-      shoulder: { x: 200, y: 330 },
-      elbow: { x: 280, y: 330 },
-      grip: { x: 320, y: 260 },
-      bar: { x: 320, y: 250 },
+      shoulder: { x: 320, y: 340 },
+      elbow: { x: 290, y: 460 },
+      grip: { x: 290, y: 348 },
+      bar: { x: 400, y: 348 },
     },
     limbs: [
       { from: 'shoulder', to: 'elbow' },
@@ -43,7 +43,7 @@ export const liftData = {
     ],
     anchors: {},
     surfaces: {
-      benchTop: 350,
+      benchTop: 360,
       benchHeight: 36,
     },
     frontProfile: {
@@ -59,12 +59,12 @@ export const liftData = {
   },
   Deadlift: {
     path: {
-      foot: { x: 220, y: 440 },
-      knee: { x: 220, y: 350 },
-      hip: { x: 205, y: 260 },
-      shoulder: { x: 205, y: 180 },
-      grip: { x: 220, y: 290 },
-      bar: { x: 220, y: 300 },
+      foot: { x: 400, y: 500 },
+      knee: { x: 408, y: 332.1905842927757 },
+      hip: { x: 304, y: 335.19454626338427 },
+      shoulder: { x: 424, y: 201.03046761339687 },
+      grip: { x: 400, y: 480 },
+      bar: { x: 400, y: 480 },
     },
     limbs: [
       { from: 'foot', to: 'knee' },
@@ -73,10 +73,10 @@ export const liftData = {
       { from: 'shoulder', to: 'grip' },
     ],
     anchors: {
-      bar: { joint: 'grip', offset: { x: 0, y: 12 } },
+      bar: { joint: 'grip', offset: { x: 0, y: 0 } },
     },
     surfaces: {
-      ground: 440,
+      ground: 500,
     },
     frontProfile: {
       fallbackWidth: 46,
