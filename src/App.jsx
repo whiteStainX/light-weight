@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 
 import MainLayout from './components/layout/MainLayout'
+import VintageWindow from './components/layout/VintageWindow'
 import AnimationCanvas from './features/powerlifting/components/AnimationCanvas'
 import ControlPanel from './features/powerlifting/components/ControlPanel'
 import SetupParameters from './features/powerlifting/components/SetupParameters'
@@ -97,31 +98,10 @@ const App = () => {
 
   const parameterDefinitions = PARAMETER_DEFINITIONS[selectedLift] ?? []
 
-  const layoutControls = (
-    <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.25em] text-black/70">
-      <span className="rounded border border-black/60 bg-black/80 px-2 py-[2px] text-white">{selectedLift}</span>
-      <span className="hidden md:inline">kinematic study in progress</span>
-    </div>
-  )
-
-  const coachNotes = (
-    <div className="space-y-2">
-      <header className="space-y-1">
-        <div className="h-[2px] w-14 bg-black" />
-        <h2 className="text-[10px] uppercase tracking-[0.3em] text-black/70">Coach&apos;s log</h2>
-      </header>
-      <ul className="grid gap-1 text-[11px] text-black/75">
-        <li>Keep the bar stacked over the mid-foot in every view.</li>
-        <li>Drive through stable feet or shoulders—the contact points never wander.</li>
-        <li>Reset your brace between reps; torque cues flare when tension drops.</li>
-      </ul>
-    </div>
-  )
-
   return (
-    <MainLayout cue={cue} controls={layoutControls} sidebar={coachNotes}>
-      <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 md:grid-cols-[minmax(0,1.45fr),minmax(0,1fr)]">
-        <div className="min-h-0">
+    <MainLayout>
+      <div className="flex flex-1 min-h-0 gap-4">
+        <VintageWindow title="Animation" className="w-3/5">
           <AnimationCanvas
             title={`${selectedLift} torque study`}
             joints={joints}
@@ -135,8 +115,8 @@ const App = () => {
             angles={angles}
             sceneBounds={sceneBounds}
           />
-        </div>
-        <div className="min-h-0 flex flex-col gap-3">
+        </VintageWindow>
+        <VintageWindow title="Controls" className="w-2/5 flex flex-col gap-4">
           <SetupParameters
             lift={selectedLift}
             definitions={parameterDefinitions}
@@ -162,7 +142,7 @@ const App = () => {
             onTempoChange={setTempo}
             phaseLabel={phase}
           />
-        </div>
+        </VintageWindow>
       </div>
     </MainLayout>
   )
