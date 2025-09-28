@@ -62,13 +62,23 @@ const computeJointOffsets = (info, positions) => {
   return offsets
 }
 
-const solveSquat = (progress) => {
+const solveSquat = (progress, params = {}) => {
   const p = cycleScalar(progress)
 
   const foot = { x: BAR_X, y: ORIGIN_Y }
-  const kneeForward = cmToPx(10 + (2 - 10) * p)
-  const hipBack = cmToPx(22 + (10 - 22) * p)
-  const barGap = cmToPx(2)
+
+  const kneeTravelTop = params.kneeTravel ?? 10
+  const kneeTravelBottom = params.kneeTravelBottom ?? Math.max(1.5, kneeTravelTop * 0.2)
+  const hipSetbackTop = params.hipSetback ?? 22
+  const hipSetbackBottom = params.hipSetbackBottom ?? Math.max(6, hipSetbackTop * 0.45)
+  const barGapCm = params.barGap ?? 2
+
+  const kneeForwardCm = kneeTravelTop + (kneeTravelBottom - kneeTravelTop) * p
+  const hipBackCm = hipSetbackTop + (hipSetbackBottom - hipSetbackTop) * p
+
+  const kneeForward = cmToPx(kneeForwardCm)
+  const hipBack = cmToPx(hipBackCm)
+  const barGap = cmToPx(barGapCm)
 
   const shin = cmToPx(42)
   const thigh = cmToPx(40)
@@ -106,16 +116,18 @@ const solveSquat = (progress) => {
   return { positions, bar, phase }
 }
 
-const solveBench = (progress) => {
+
+const solveBench = (progress, params = {}) => {
   const p = cycleScalar(progress)
 
   const cx = BAR_X
   const cy = 320
-  const barTravel = cmToPx(22)
+
+  const barTravel = cmToPx(params.barTravel ?? 22)
   const barBase = cy + cmToPx(7)
 
-  const gripSpan = cmToPx(55)
-  const shoulderOffset = cmToPx(20)
+  const gripSpan = cmToPx(params.gripSpan ?? 55)
+  const shoulderOffset = cmToPx(params.shoulderSet ?? 20)
   const forearm = cmToPx(28)
   const humerus = cmToPx(30)
 
@@ -141,24 +153,27 @@ const solveBench = (progress) => {
 
   return { positions, bar, phase }
 }
-
-const solveDeadlift = (progress) => {
+ 
+const solveDeadlift = (progress, params = {}) => {
   const p = cycleScalar(progress)
 
-  const barRise = 180
-  const bar = { x: BAR_X, y: ORIGIN_Y - (20 + barRise * p) }
+  const barTravel = cmToPx(params.barTravel ?? 45)
+  const startClearance = cmToPx(params.startClearance ?? 5)
+  const bar = { x: BAR_X, y: ORIGIN_Y - (startClearance + barTravel * p) }
 
   const foot = { x: BAR_X, y: ORIGIN_Y }
   const kneeOffset = cmToPx(2)
   const knee = { x: BAR_X + kneeOffset, y: foot.y - safeSqrt(cmToPx(42) ** 2 - kneeOffset ** 2) }
 
-  const shoulderX = BAR_X + cmToPx(6)
+  const shoulderOffset = cmToPx(params.shoulderOffset ?? 6)
+  const shoulderX = BAR_X + shoulderOffset
   const shoulder = {
     x: shoulderX,
-    y: bar.y - safeSqrt(cmToPx(70) ** 2 - (shoulderX - BAR_X) ** 2),
+    y: bar.y - safeSqrt(cmToPx(70) ** 2 - shoulderOffset ** 2),
   }
 
-  const hipX = BAR_X - cmToPx(24)
+  const hipSetback = cmToPx(params.hipSetback ?? 24)
+  const hipX = BAR_X - hipSetback
   const hip = {
     x: hipX,
     y: shoulder.y + safeSqrt(cmToPx(45) ** 2 - (shoulderX - hipX) ** 2),
@@ -199,7 +214,7 @@ const normaliseProgress = (value) => {
   return fractional < 0 ? fractional + 1 : fractional
 }
 
-export const useLiftAnimation = ({ liftType }) => {
+export const useLiftAnimation = ({ liftType, parameters = {} }) => {
   const profile = useMemo(() => ensureProfile(liftType), [liftType])
   const skeletonInfo = useMemo(() => buildSkeletonInfo(liftType), [liftType])
   const [isPlaying, setIsPlaying] = useState(true)
@@ -250,7 +265,8 @@ export const useLiftAnimation = ({ liftType }) => {
   const frame = useMemo(() => {
     const solver = profile.solver ?? solveSquat
     const normalized = normaliseProgress(progress)
-    const solution = solver(normalized)
+
+    const solution = solver(normalized, parameters)
     const jointOffsets = computeJointOffsets(skeletonInfo, solution.positions)
     const baseBar = skeletonInfo.data.path.bar ?? { x: 0, y: 0 }
 
@@ -262,7 +278,9 @@ export const useLiftAnimation = ({ liftType }) => {
       },
       phase: solution.phase,
     }
-  }, [profile.solver, progress, skeletonInfo])
+
+  }, [parameters, profile.solver, progress, skeletonInfo])
+
 
   const togglePlay = useCallback(() => {
     setIsPlaying((current) => !current)

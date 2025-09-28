@@ -19,12 +19,12 @@ const ControlPanel = ({
   const angleEntries = angles ? Object.entries(angles) : []
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-3 rounded border border-black/20 bg-white p-3 text-[10px] text-black shadow-[4px_4px_0_0_rgba(0,0,0,0.12)]">
+    <div className="flex h-full min-h-0 flex-col gap-3 rounded border border-black/40 bg-white p-3 text-[10px] text-[#0c0c0c] shadow-[2px_2px_0_0_rgba(0,0,0,0.4)]">
       <section className="space-y-1">
         <header className="flex items-center justify-between">
           <div>
-            <p className="uppercase tracking-[0.35em] text-black/60">Playback</p>
-            <p className="text-[9px] text-black/50">{phaseLabel ?? 'Continuous cycle'}</p>
+            <p className="uppercase tracking-[0.3em] text-black/70">Playback</p>
+            <p className="text-[9px] text-black/60">{phaseLabel ?? 'Continuous cycle'}</p>
           </div>
           <button
             type="button"
@@ -34,7 +34,7 @@ const ControlPanel = ({
             {isPlaying ? 'Pause' : 'Play'}
           </button>
         </header>
-        <label className="grid gap-1 uppercase tracking-[0.2em] text-black/60">
+        <label className="grid gap-1 uppercase tracking-[0.2em] text-black/70">
           Tempo
           <input
             type="range"
@@ -50,15 +50,17 @@ const ControlPanel = ({
       </section>
 
       <section className="space-y-1">
-        <p className="uppercase tracking-[0.35em] text-black/60">Select lift</p>
-        <div className="grid grid-cols-2 gap-1">
+        <p className="uppercase tracking-[0.3em] text-black/70">Select lift</p>
+        <div className="grid grid-cols-1 gap-1 sm:grid-cols-2">
           {lifts.map((lift) => (
             <button
               key={lift}
               type="button"
               onClick={() => onSelectLift(lift)}
               className={`rounded border px-2 py-1 text-[9px] uppercase tracking-[0.2em] transition-colors ${
-                lift === selectedLift ? 'border-black bg-black text-white' : 'border-black/30 bg-white text-black hover:border-black'
+                lift === selectedLift
+                  ? 'border-black bg-black text-white'
+                  : 'border-black/30 bg-white text-[#0c0c0c] hover:border-black hover:bg-black/10'
               }`}
             >
               {lift}
@@ -69,21 +71,21 @@ const ControlPanel = ({
 
       <section className="space-y-1">
         <header className="flex items-center justify-between">
-          <p className="uppercase tracking-[0.35em] text-black/60">Joint tuning</p>
+          <p className="uppercase tracking-[0.3em] text-black/70">Joint tuning</p>
           <button
             type="button"
             onClick={onResetAngles}
-            className="rounded border border-black/40 px-2 py-1 text-[9px] uppercase tracking-[0.25em] text-black transition-colors hover:border-black"
+            className="rounded border border-black/40 px-2 py-1 text-[9px] uppercase tracking-[0.25em] text-[#0c0c0c] transition-colors hover:border-black"
           >
             Reset
           </button>
         </header>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           {angleEntries.map(([joint, { absolute }]) => (
             <div key={joint} className="space-y-1">
-              <div className="flex items-baseline justify-between uppercase tracking-[0.2em] text-black/60">
+              <div className="flex items-baseline justify-between uppercase tracking-[0.2em] text-black/70">
                 <span>{joint}</span>
-                <span className="text-black">{absolute.toFixed(1)}°</span>
+                <span className="text-[#0c0c0c]">{absolute.toFixed(1)}°</span>
               </div>
               <input
                 type="range"
@@ -100,10 +102,10 @@ const ControlPanel = ({
       </section>
 
       <section className="space-y-1">
-        <p className="uppercase tracking-[0.35em] text-black/60">Bar path</p>
-        <div className="grid grid-cols-2 gap-2">
+        <p className="uppercase tracking-[0.3em] text-black/70">Bar path</p>
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           <label className="space-y-1">
-            <span className="block uppercase tracking-[0.2em] text-black/60">Horizontal</span>
+            <span className="block uppercase tracking-[0.2em] text-black/70">Horizontal</span>
             <input
               type="range"
               min={-60}
@@ -115,7 +117,7 @@ const ControlPanel = ({
             />
           </label>
           <label className="space-y-1">
-            <span className="block uppercase tracking-[0.2em] text-black/60">Vertical</span>
+            <span className="block uppercase tracking-[0.2em] text-black/70">Vertical</span>
             <input
               type="range"
               min={-60}
@@ -133,15 +135,18 @@ const ControlPanel = ({
       </section>
 
       <section className="space-y-1">
-        <p className="uppercase tracking-[0.35em] text-black/60">Torque snapshot</p>
-        <ul className="grid grid-cols-2 gap-x-2 gap-y-1">
+        <p className="uppercase tracking-[0.3em] text-black/70">Torque snapshot</p>
+        <ul className="grid grid-cols-1 gap-x-2 gap-y-1 sm:grid-cols-2">
           {torqueEntries.map(([joint, value]) => (
-            <li key={joint} className="flex items-center justify-between border-b border-black/10 pb-1 last:border-b-0 last:pb-0">
-              <span className="uppercase tracking-[0.2em] text-black/60">{joint}</span>
-              <span className="font-semibold text-black">{value.toFixed(2)} Nm</span>
+            <li
+              key={joint}
+              className="flex items-center justify-between border-b border-black/20 pb-1 last:border-b-0 last:pb-0"
+            >
+              <span className="uppercase tracking-[0.2em] text-black/70">{joint}</span>
+              <span className="font-semibold text-[#0c0c0c]">{value.toFixed(2)} Nm</span>
             </li>
           ))}
-          {!torqueEntries.length && <li className="text-black/40">No torque data.</li>}
+          {!torqueEntries.length && <li className="text-black/30">No torque data.</li>}
         </ul>
       </section>
     </div>

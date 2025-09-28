@@ -37,12 +37,29 @@ describe('useLiftAnimation motion solvers', () => {
     assert.ok(depth.positions.knee.y > depth.positions.hip.y)
   })
 
+
+  it('responds to squat setup parameter changes', () => {
+    const neutral = solveSquat(0.5)
+    const wide = solveSquat(0.5, { kneeTravel: 14, hipSetback: 26 })
+
+    assert.ok(wide.positions.knee.x > neutral.positions.knee.x)
+    assert.ok(wide.positions.hip.x < neutral.positions.hip.x)
+  })
+
   it('keeps the bench press bar path vertical', () => {
     const touch = solveBench(0)
     const lockout = solveBench(0.5)
 
     assert.equal(Math.round(touch.bar.x), Math.round(lockout.bar.x))
     assert.ok(touch.bar.y > lockout.bar.y)
+  })
+
+  it('updates bench geometry with setup parameters', () => {
+    const close = solveBench(0, { gripSpan: 48 })
+    const wide = solveBench(0, { gripSpan: 64 })
+
+    assert.ok(wide.positions.grip.x < close.positions.grip.x)
+    assert.ok(wide.positions.elbow.x < close.positions.elbow.x)
   })
 
   it('keeps the deadlift grip centred on the bar', () => {
@@ -52,6 +69,15 @@ describe('useLiftAnimation motion solvers', () => {
     assert.equal(Math.round(start.positions.grip.x), Math.round(start.bar.x))
     assert.equal(Math.round(top.positions.grip.x), Math.round(top.bar.x))
     assert.ok(top.positions.hip.y < start.positions.hip.y)
+  })
+
+  it('recomputes the deadlift wedge with new parameters', () => {
+    const standard = solveDeadlift(0)
+    const deficit = solveDeadlift(0, { startClearance: 7 })
+
+    assert.ok(deficit.bar.y < standard.bar.y)
+    assert.ok(deficit.positions.hip.y < standard.positions.hip.y)
+
   })
 
   it('produces zero offsets at the neutral squat setup', () => {

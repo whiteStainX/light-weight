@@ -222,27 +222,26 @@ const AnimationCanvas = ({
   const benchHeight = surfaces.benchHeight ?? 28
 
   const highlightedJoints = trackedJoints.filter((joint) => KEY_JOINTS.has(joint))
-
   const benchWidth = Math.min(viewWidth * 0.64, viewWidth)
   const benchX = clamp(viewBounds.minX + viewWidth * 0.18, viewBounds.minX, viewBounds.maxX - benchWidth)
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-3 rounded border border-black/20 bg-white px-4 py-3 text-black shadow-[4px_4px_0_0_rgba(0,0,0,0.12)]">
-      <header className="flex items-end justify-between text-[11px] uppercase tracking-[0.3em] text-black/60">
+    <div className="flex h-full min-h-0 flex-col gap-3 rounded border border-black/40 bg-white px-4 py-3 text-[#0c0c0c] shadow-[2px_2px_0_0_rgba(0,0,0,0.4)]">
+      <header className="flex items-end justify-between text-[11px] uppercase tracking-[0.25em] text-black/70">
         <div>
           <p className="text-black">{title}</p>
-          <p className="text-[10px]">Phase · {phase ?? 'Cycle'} · {Math.round((progress ?? 0) * 100)}%</p>
+          <p className="text-[10px] text-black/60">Phase · {phase ?? 'Cycle'} · {Math.round((progress ?? 0) * 100)}%</p>
         </div>
         {torque && (
-          <div className="text-right text-[10px] leading-tight">
+          <div className="text-right text-[10px] leading-tight text-black/70">
             <p>Total torque</p>
-            <p className="text-black text-sm font-semibold tracking-tight">{torque.total.toFixed(2)} Nm</p>
+            <p className="text-sm font-semibold tracking-tight text-black">{torque.total.toFixed(2)} Nm</p>
           </div>
         )}
       </header>
       <svg
         viewBox={`${viewBounds.minX.toFixed(2)} ${viewBounds.minY.toFixed(2)} ${viewWidth.toFixed(2)} ${viewHeight.toFixed(2)}`}
-        className="h-full min-h-0 w-full flex-1 rounded border border-black/10 bg-[#fdfdf7]"
+        className="h-full min-h-0 w-full flex-1 rounded border border-black/30 bg-[#f5f5f5]"
         role="img"
         aria-label={`${title} single-view diagram`}
         preserveAspectRatio="xMidYMid meet"
@@ -255,7 +254,7 @@ const AnimationCanvas = ({
               y1={line.position}
               x2={viewBounds.maxX}
               y2={line.position}
-              stroke="rgba(0,0,0,0.08)"
+              stroke="#d0d0d0"
               strokeWidth={1}
             />
           ) : (
@@ -265,7 +264,7 @@ const AnimationCanvas = ({
               y1={viewBounds.minY}
               x2={line.position}
               y2={viewBounds.maxY}
-              stroke="rgba(0,0,0,0.08)"
+              stroke="#d0d0d0"
               strokeWidth={1}
             />
           ),
@@ -276,7 +275,7 @@ const AnimationCanvas = ({
           y1={viewBounds.minY}
           x2={barX}
           y2={viewBounds.maxY}
-          stroke="black"
+          stroke="#000000"
           strokeWidth={1.5}
           strokeDasharray="6 6"
         />
@@ -287,7 +286,7 @@ const AnimationCanvas = ({
             y={groundY}
             width={viewWidth}
             height={Math.max(0, viewBounds.maxY - groundY)}
-            fill="rgba(0,0,0,0.05)"
+            fill="#e5e5e5"
           />
         )}
 
@@ -297,8 +296,8 @@ const AnimationCanvas = ({
             y={benchTop}
             width={benchWidth}
             height={benchHeight}
-            fill="rgba(0,0,0,0.05)"
-            stroke="black"
+            fill="#ededed"
+            stroke="#000000"
             strokeWidth={1}
           />
         )}
@@ -311,18 +310,18 @@ const AnimationCanvas = ({
                 y1={momentLine.y1}
                 x2={momentLine.x2}
                 y2={momentLine.y2}
-                stroke="black"
+                stroke="#000000"
                 strokeWidth={1}
                 strokeDasharray="4 4"
               />
             )}
-            {arcPath && <path d={arcPath} stroke="black" strokeWidth={1} fill="none" />}
-            {arrowPath && <path d={arrowPath} stroke="black" strokeWidth={1} fill="none" />}
+            {arcPath && <path d={arcPath} stroke="#0c0c0c" strokeWidth={1} fill="none" />}
+            {arrowPath && <path d={arrowPath} stroke="#0c0c0c" strokeWidth={1} fill="none" />}
             <text
               x={labelPos.x}
               y={labelPos.y}
               textAnchor="middle"
-              className="fill-black text-[9px]"
+              className="fill-[#0c0c0c] text-[9px]"
             >
               {label}
             </text>
@@ -344,11 +343,11 @@ const AnimationCanvas = ({
               y1={barPosition.y}
               x2={barPosition.x + BAR_HALF_SPAN}
               y2={barPosition.y}
-              stroke="black"
+              stroke="#0c0c0c"
               strokeWidth={3}
               strokeLinecap="round"
             />
-            <circle cx={barPosition.x} cy={barPosition.y} r={9} fill="white" stroke="black" strokeWidth={2} />
+            <circle cx={barPosition.x} cy={barPosition.y} r={9} fill="#ffffff" stroke="#0c0c0c" strokeWidth={2} />
           </g>
         )}
 
@@ -358,11 +357,11 @@ const AnimationCanvas = ({
           nodeRadius={5}
           strokeWidth={3}
           accentJoint={highlightedJoints}
-          className="stroke-black fill-white"
+          className="stroke-[#0c0c0c] fill-[#ffffff]"
         />
 
         {rootPosition && (
-          <circle cx={rootPosition.x} cy={rootPosition.y} r={4} fill="black" stroke="white" strokeWidth={1} />
+          <circle cx={rootPosition.x} cy={rootPosition.y} r={4} fill="#0c0c0c" stroke="#ffffff" strokeWidth={1} />
         )}
 
         {angles && (
@@ -377,17 +376,14 @@ const AnimationCanvas = ({
           </g>
         )}
       </svg>
-      <footer className="flex items-center justify-between text-[10px] uppercase tracking-[0.2em] text-black/60">
+      <footer className="flex items-center justify-between text-[10px] uppercase tracking-[0.2em] text-black/70">
         <div className="flex items-center gap-2">
           <span className="inline-flex h-3 w-3 items-center justify-center rounded-sm border border-black bg-black" />
           <span>Torque direction markers</span>
         </div>
         <div className="flex items-center gap-2">
           <span className="inline-flex h-1 w-24 overflow-hidden rounded-full border border-black/40">
-            <span
-              className="block h-full bg-black"
-              style={{ width: `${Math.round((progress ?? 0) * 100)}%` }}
-            />
+            <span className="block h-full bg-black" style={{ width: `${Math.round((progress ?? 0) * 100)}%` }} />
           </span>
           <span>Cycle progress</span>
         </div>
