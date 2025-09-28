@@ -13,8 +13,8 @@
 }
 
 .knob {
-  width: 40px;
-  height: 40px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
   background-color: #333;
   border: 2px solid #000;
@@ -24,10 +24,10 @@
 
 .knob-marker {
   width: 2px;
-  height: 10px;
+  height: 8px;
   background-color: #fff;
   position: absolute;
-  top: 4px;
+  top: 2px;
   left: 50%;
   transform-origin: bottom center;
   transform: translateX(-50%);

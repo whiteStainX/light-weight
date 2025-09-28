@@ -21,21 +21,23 @@ const SetupParameters = ({ lift, definitions = [], values = {}, defaults = {}, o
         </button>
       </header>
 
-      <div className="grid grid-cols-2 grid-rows-2 gap-4">
-        {definitions.map(({ key, label, min = 0, max = 1, step = 1 }) => {
+      <div className="grid grid-cols-3 grid-rows-2 gap-x-2 gap-y-4">
+        {definitions.map(({ key, label, description, min = 0, max = 1, step = 1 }) => {
           const current = Number(values?.[key] ?? defaults?.[key] ?? min);
           return (
-            <Knob
-              key={key}
-              label={label}
-              value={current}
-              onChange={(value) => onChange?.(key, value)}
-              min={min}
-              max={max}
-              step={step}
-            />
+            <div key={key} className="flex flex-col items-center">
+              <Knob
+                label={label}
+                value={current}
+                onChange={(value) => onChange?.(key, value)}
+                min={min}
+                max={max}
+                step={step}
+              />
+              {description && <p className="text-[8px] text-center mt-1 text-black/60">{description}</p>}
+            </div>
           );
-        })}
+        })} 
       </div>
     </section>
   );

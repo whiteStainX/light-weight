@@ -1,4 +1,4 @@
-import Knob from './Knob';
+import Stepper from './Stepper';
 
 const ControlPanel = ({ lifts, selectedLift, onSelectLift, isPlaying, onTogglePlay, tempo, onTempoChange, angles, manualOffsets, onAngleOffsetChange, onResetAngles, barOffset, onBarOffsetChange }) => {
   const angleEntries = angles ? Object.entries(angles) : []
@@ -61,9 +61,9 @@ const ControlPanel = ({ lifts, selectedLift, onSelectLift, isPlaying, onTogglePl
                 Reset
             </button>
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-1">
           {angleEntries.map(([joint]) => (
-            <Knob
+            <Stepper
               key={joint}
               label={joint}
               value={manualOffsets?.[joint] ?? 0}
@@ -78,8 +78,8 @@ const ControlPanel = ({ lifts, selectedLift, onSelectLift, isPlaying, onTogglePl
 
       <section>
         <p className="uppercase tracking-widest text-xs mb-2">Bar Path</p>
-        <div className="grid grid-cols-2 gap-4">
-            <Knob
+        <div className="grid grid-cols-1 gap-1">
+            <Stepper
               label="Horizontal"
               value={barOffset?.x ?? 0}
               onChange={(value) => onBarOffsetChange({ x: value })}
@@ -87,7 +87,7 @@ const ControlPanel = ({ lifts, selectedLift, onSelectLift, isPlaying, onTogglePl
               max={60}
               step={1}
             />
-            <Knob
+            <Stepper
               label="Vertical"
               value={barOffset?.y ?? 0}
               onChange={(value) => onBarOffsetChange({ y: value })}
