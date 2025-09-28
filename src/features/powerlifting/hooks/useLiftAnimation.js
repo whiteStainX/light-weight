@@ -125,9 +125,10 @@ const solveBench = (progress, params = {}, skeletonInfo) => {
   const humerus = cmToPx(30)
 
   const barPosition = { x: cx, y: barBase - barTravel * p }
-  const gripX = cx - gripSpan / 2
-  const elbow = { x: gripX, y: barPosition.y + forearm }
-  const shoulder = { x: cx - shoulderOffset, y: elbow.y - humerus }
+  const grip = { x: barPosition.x, y: barPosition.y } // Grip is now directly at barPosition
+
+  const elbow = { x: grip.x, y: grip.y + forearm }
+  const shoulder = { x: grip.x - shoulderOffset, y: elbow.y - humerus }
 
   // Derive angles from calculated positions
   const angleOffsets = {}
@@ -143,7 +144,7 @@ const solveBench = (progress, params = {}, skeletonInfo) => {
   const positions = {
     shoulder,
     elbow,
-    grip: { x: gripX, y: barPosition.y },
+    grip,
   };
 
   angleOffsets.elbow = calculateAngleOffset('elbow', 'shoulder');
@@ -158,7 +159,7 @@ const solveBench = (progress, params = {}, skeletonInfo) => {
           ? 'Drive to lockout'
           : 'Hold & reset'
 
-  return { angleOffsets, barPosition, phase }
+  return { angleOffsets, barPosition: grip, phase }
 }
  
 const solveDeadlift = (progress, params = {}, skeletonInfo) => {
@@ -166,25 +167,28 @@ const solveDeadlift = (progress, params = {}, skeletonInfo) => {
 
   const barTravel = cmToPx(params.barTravel ?? 45)
   const startClearance = cmToPx(params.startClearance ?? 5)
-  const barPosition = { x: BAR_X, y: ORIGIN_Y - (startClearance + barTravel * p) }
+  const newBarX = 410; // Adjusted BAR_X for deadlift
+  const barPosition = { x: newBarX, y: ORIGIN_Y - (startClearance + barTravel * p) }
 
-  const foot = { x: BAR_X, y: ORIGIN_Y }
+  const foot = { x: newBarX, y: ORIGIN_Y }
   const kneeOffset = cmToPx(2)
-  const knee = { x: BAR_X + kneeOffset, y: foot.y - safeSqrt(cmToPx(42) ** 2 - kneeOffset ** 2) }
+  const knee = { x: newBarX + kneeOffset, y: foot.y - safeSqrt(cmToPx(42) ** 2 - kneeOffset ** 2) }
 
   const shoulderOffset = cmToPx(params.shoulderOffset ?? 6)
-  const shoulderX = BAR_X + shoulderOffset
+  const shoulderX = newBarX + shoulderOffset
   const shoulder = {
     x: shoulderX,
     y: barPosition.y - safeSqrt(cmToPx(70) ** 2 - shoulderOffset ** 2),
   }
 
   const hipSetback = cmToPx(params.hipSetback ?? 24)
-  const hipX = BAR_X - hipSetback
+  const hipX = newBarX - hipSetback
   const hip = {
     x: hipX,
     y: shoulder.y + safeSqrt(cmToPx(45) ** 2 - (shoulderX - hipX) ** 2),
   }
+
+  const grip = { x: newBarX, y: barPosition.y }; // Grip aligns with newBarX and barPosition.y
 
   // Derive angles from calculated positions
   const angleOffsets = {}
@@ -202,7 +206,7 @@ const solveDeadlift = (progress, params = {}, skeletonInfo) => {
     knee,
     hip,
     shoulder,
-    grip: { x: BAR_X, y: barPosition.y },
+    grip,
   };
 
   angleOffsets.knee = calculateAngleOffset('knee', 'foot');
@@ -220,7 +224,7 @@ const solveDeadlift = (progress, params = {}, skeletonInfo) => {
           ? 'Hips through'
           : 'Return under control'
 
-  return { angleOffsets, barPosition, phase }
+  return { angleOffsets, barPosition: grip, phase }
 }
 
 const PROFILES = {
@@ -268,7 +272,10 @@ export const useLiftAnimation = ({ liftType, parameters = {} }) => {
 
       const duration = profile.duration / clamp(tempo, 0.3, 3)
       if (duration > 0) {
-        setProgress((prev) => normaliseProgress(prev + elapsed / duration))
+        setProgress((prev) => {
+          const nextValue = normaliseProgress(prev + elapsed / duration);
+          return nextValue;
+        });
       }
 
       frameRef.current = requestAnimationFrame(tick)

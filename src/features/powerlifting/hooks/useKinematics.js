@@ -245,33 +245,25 @@ export const useKinematics = ({ liftType = 'Squat', manualAngleOffsets = {}, ani
     [combinedAngleOffsets, manualAngleOffsets, rootPosition, skeleton],
   )
 
-  const barBase = useMemo(() => {
-    const anchorConfig = skeleton.anchors?.bar
-    if (anchorConfig?.joint && joints?.[anchorConfig.joint]) {
-      const anchorPoint = joints[anchorConfig.joint]
-      const offset = anchorConfig.offset ?? { x: 0, y: 0 }
-      return {
-        x: anchorPoint.x + (offset.x ?? 0),
-        y: anchorPoint.y + (offset.y ?? 0),
-      }
-    }
-
-    if (skeleton.basePath.bar) {
-      return { ...skeleton.basePath.bar }
-    }
-
-    return { x: rootPosition.x, y: rootPosition.y }
-  }, [joints, rootPosition.x, rootPosition.y, skeleton.anchors?.bar, skeleton.basePath.bar])
-
   const finalBarPosition = useMemo(
     () => {
+      const anchorConfig = skeleton.anchors?.bar;
+      if (anchorConfig?.joint && joints?.[anchorConfig.joint]) {
+        const anchorPoint = joints[anchorConfig.joint];
+        const offset = anchorConfig.offset ?? { x: 0, y: 0 };
+        return {
+          x: anchorPoint.x + (offset.x ?? 0) + (manualBarOffset.x ?? 0),
+          y: anchorPoint.y + (offset.y ?? 0) + (manualBarOffset.y ?? 0),
+        };
+      }
+      // If no anchor, use the animated bar position (plus manual offset)
       return {
         x: animatedBarPosition.x + (manualBarOffset.x ?? 0),
         y: animatedBarPosition.y + (manualBarOffset.y ?? 0),
-      }
+      };
     },
-    [animatedBarPosition, manualBarOffset.x, manualBarOffset.y],
-  )
+    [animatedBarPosition, manualBarOffset, joints, skeleton.anchors?.bar],
+  );
 
   const torque = useMemo(() => estimateTorque(joints, finalBarPosition), [finalBarPosition, joints])
 
