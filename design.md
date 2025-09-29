@@ -50,11 +50,51 @@ To streamline the architecture and improve biomechanical accuracy, the animation
 
 **Bench Press:**
 *   **Problem:** The stick figure was static, and the grip did not match the bar's position. This was due to the bar not being explicitly anchored to the `grip` joint in `liftData.js`.
-*   **Solution:** Added an explicit bar anchor to the `grip` joint in `liftData.Bench`. The `solveBench` function in `useLiftAnimation.js` was refined to ensure the `grip` joint's position directly corresponds to the bar's position, allowing `useKinematics` to correctly derive the bar's movement from the anchored joint.
+*   **Solution:** Corrected the J-curve implementation in `solveBench` by reversing the horizontal bar path to move towards the feet on descent, matching biomechanical diagrams. Increased the default `barTravel` parameter in `setupParameters.js` to provide a more realistic vertical range of motion. Refined the elbow tuck logic by adjusting the start and end angles for the shoulder-elbow segment, creating a more natural movement.
 
 **Deadlift:**
 *   **Problem:** The bar visually cut through the legs, and there was a potential architectural mismatch in how the bar's position was determined when anchored.
 *   **Solution:** Adjusted the horizontal `BAR_X` position in `solveDeadlift` (within `useLiftAnimation.js`) to place the bar slightly in front of the legs, improving biomechanical accuracy and preventing visual overlap. The `solveDeadlift` function was further refined to adopt a squat-like kinematic approach for horizontal joint positioning. This involves defining dynamic horizontal offsets for the knee, hip, and shoulder relative to the fixed `BAR_X` throughout the lift. This ensures the bar path remains consistently vertical relative to the body, addressing the perception of horizontal bar movement. The `useKinematics.js` logic for bar positioning was made more robust: if an anchor is defined, the bar's position is derived from the anchored joint's position plus any manual offset; otherwise, it uses the animated bar position. This ensures correct bar-grip synchronization and consistent behavior across lifts.
+
+### Data Flow Architecture
+
+The application's data flow is designed to be unidirectional, ensuring a clear and predictable state management process. The `usePowerlifting` hook acts as the central controller, orchestrating the flow of data between user inputs, animation logic, and the final kinematic calculations.
+
+```
+[ VintageControlPanel (UI) ]
+        |
+        | (User Events: e.g., onSelectLift, onTempoChange)
+        v
++---------------------------------+
+|      usePowerlifting.js         |
+|---------------------------------|
+| - Manages all application state |
+|   (selectedLift, parameters,    |
+|    manualOffsets, etc.)         |
+| - Contains all event handlers   |
+|                                 |-----> [ useLiftAnimation.js ]
++---------------------------------+       | (Receives liftType, params)
+        |                                 |
+        | (Passes down props)             | - Calculates animatedAngleOffsets
+        v                                 | - Calculates animatedBarPosition
++---------------------------------+       |
+|        useKinematics.js         | <-----| (Returns animation data)
+|---------------------------------|
+| - Receives animated data and    |
+|   manual overrides              |
+| - Resolves skeleton from        |
+|   liftData.js                   |
+| - Computes final joint          |
+|   positions (Forward Kinematics)|
++---------------------------------+
+        |
+        | (Returns final kinematics: joints, barPosition, etc.)
+        v
+[ AnimationCanvas.jsx (Rendering) ]
+        |
+        v
+[ StickFigure.jsx (SVG) ]
+```
 
 ### Folder Structure
 

@@ -2,18 +2,23 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { liftData } from '../lib/liftData.js'
 import { toRadians } from './useKinematics.js'
+import { PX_PER_CM, ORIGIN_Y, BAR_X } from '../lib/constants.js'
 
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value))
-
-const PX_PER_CM = 4
-const ORIGIN_Y = 500
-const BAR_X = 400
 
 const cmToPx = (cm) => cm * PX_PER_CM
 const safeSqrt = (value) => Math.sqrt(Math.max(value, 0))
 
 const cycleScalar = (progress) => 0.5 * (1 - Math.cos(2 * Math.PI * progress))
 const cycleDirection = (progress) => Math.sin(2 * Math.PI * progress)
+
+const calculateAngleOffset = (positions, jointName, parentName, skeletonInfo) => {
+  const parentPos = positions[parentName];
+  const jointPos = positions[jointName];
+  const currentAngle = Math.atan2(jointPos.y - parentPos.y, jointPos.x - parentPos.x);
+  const defaultAngle = skeletonInfo.defaultAngles[jointName] || 0;
+  return currentAngle - defaultAngle;
+};
 
 const buildSkeletonInfo = (liftType) => {
   const data = liftData[liftType] ?? liftData.Squat
@@ -59,9 +64,9 @@ const solveSquat = (progress, params = {}, skeletonInfo) => {
   const hipBack = cmToPx(hipBackCm)
   const barGap = cmToPx(barGapCm)
 
-  const shin = cmToPx(42)
-  const thigh = cmToPx(40)
-  const torso = cmToPx(45)
+  const shin = cmToPx(skeletonInfo.data.limbLengths.shin || 42)
+  const thigh = cmToPx(skeletonInfo.data.limbLengths.thigh || 40)
+  const torso = cmToPx(skeletonInfo.data.limbLengths.torso || 45)
 
   const kneeX = foot.x + kneeForward
   const kneeY = foot.y - safeSqrt(shin * shin - kneeForward * kneeForward)
@@ -79,14 +84,6 @@ const solveSquat = (progress, params = {}, skeletonInfo) => {
   // Derive angles from calculated positions
   const angleOffsets = {}
 
-  const calculateAngleOffset = (jointName, parentName) => {
-    const parentPos = { x: positions[parentName].x, y: positions[parentName].y };
-    const jointPos = { x: positions[jointName].x, y: positions[jointName].y };
-    const currentAngle = Math.atan2(jointPos.y - parentPos.y, jointPos.x - parentPos.x);
-    const defaultAngle = skeletonInfo.defaultAngles[jointName] || 0;
-    return currentAngle - defaultAngle;
-  };
-
   const positions = {
     foot,
     knee: { x: kneeX, y: kneeY },
@@ -94,9 +91,9 @@ const solveSquat = (progress, params = {}, skeletonInfo) => {
     shoulder: { x: shoulderX, y: shoulderY },
   };
 
-  angleOffsets.knee = calculateAngleOffset('knee', 'foot');
-  angleOffsets.hip = calculateAngleOffset('hip', 'knee');
-  angleOffsets.shoulder = calculateAngleOffset('shoulder', 'hip');
+  angleOffsets.knee = calculateAngleOffset(positions, 'knee', 'foot', skeletonInfo);
+  angleOffsets.hip = calculateAngleOffset(positions, 'hip', 'knee', skeletonInfo);
+  angleOffsets.shoulder = calculateAngleOffset(positions, 'shoulder', 'hip', skeletonInfo);
 
   const phase =
     progress < 0.1
@@ -113,11 +110,11 @@ const solveSquat = (progress, params = {}, skeletonInfo) => {
 const solveBench = (progress, params = {}, skeletonInfo) => {
   const p = cycleScalar(progress)
 
-  const cx = BAR_X // 400 (reference center)
-  const cy = 320
+  const cx = skeletonInfo.data.basePositions?.cx ?? BAR_X; // 400 (reference center)
+  const cy = skeletonInfo.data.basePositions?.cy ?? 320;
 
   const barTravel = cmToPx(params.barTravel ?? 22) // 88px
-  const barBase = cy + cmToPx(7) // 348
+  const barBase = skeletonInfo.data.basePositions?.barBaseY ?? cy + cmToPx(7); // 348
 
   // Target angle for elbow-grip segment (vertical forearm)
   const targetGripAngle = toRadians(-90); // -90 degrees for vertical forearm
@@ -135,7 +132,7 @@ const solveBench = (progress, params = {}, skeletonInfo) => {
 
   // Bar position (J-curve)
   const barXOffsetStartCm = params.barXOffsetStart ?? 0; // Bar over shoulders at top
-  const barXOffsetEndCm = params.barXOffsetEnd ?? -5;   // Bar slightly back over chest at bottom
+  const barXOffsetEndCm = params.barXOffsetEnd ?? 8;   // Bar moves towards feet at bottom
 
   const currentBarXOffsetCm = barXOffsetStartCm + (barXOffsetEndCm - barXOffsetStartCm) * p;
   const currentBarX = cx + cmToPx(currentBarXOffsetCm);
@@ -157,7 +154,7 @@ const solveBench = (progress, params = {}, skeletonInfo) => {
 const solveDeadlift = (progress, params = {}, skeletonInfo) => {
   const p = cycleScalar(progress)
 
-  const barX = 410; // Fixed horizontal bar position
+  const barX = skeletonInfo.data.basePositions?.barX ?? 410; // Fixed horizontal bar position
 
   const barTravel = cmToPx(params.barTravel ?? 45)
   const startClearance = cmToPx(params.startClearance ?? 5)
@@ -165,10 +162,10 @@ const solveDeadlift = (progress, params = {}, skeletonInfo) => {
 
   const foot = { x: barX, y: ORIGIN_Y } // Foot X aligns with barX
 
-  const shinLength = cmToPx(42);
-  const thighLength = cmToPx(40);
-  const torsoLength = cmToPx(45);
-  const armLength = cmToPx(70);
+  const shinLength = cmToPx(skeletonInfo.data.limbLengths.shin || 42);
+  const thighLength = cmToPx(skeletonInfo.data.limbLengths.thigh || 40);
+  const torsoLength = cmToPx(skeletonInfo.data.limbLengths.torso || 45);
+  const armLength = cmToPx(skeletonInfo.data.limbLengths.arm || 70);
 
   // Dynamic Knee Horizontal Position (relative to foot)
   const kneeForwardStartCm = params.kneeForwardStart ?? 5; // Knees slightly forward at start
@@ -203,17 +200,6 @@ const solveDeadlift = (progress, params = {}, skeletonInfo) => {
 
   const grip = { x: barX, y: barPosition.y };
 
-  // Derive angles from calculated positions
-  const angleOffsets = {}
-
-  const calculateAngleOffset = (jointName, parentName) => {
-    const parentPos = { x: positions[parentName].x, y: positions[parentName].y };
-    const jointPos = { x: positions[jointName].x, y: positions[jointName].y };
-    const currentAngle = Math.atan2(jointPos.y - parentPos.y, jointPos.x - parentPos.x);
-    const defaultAngle = skeletonInfo.defaultAngles[jointName] || 0;
-    return currentAngle - defaultAngle;
-  };
-
   const positions = {
     foot,
     knee: { x: kneeX, y: kneeY },
@@ -222,10 +208,13 @@ const solveDeadlift = (progress, params = {}, skeletonInfo) => {
     grip,
   };
 
-  angleOffsets.knee = calculateAngleOffset('knee', 'foot');
-  angleOffsets.hip = calculateAngleOffset('hip', 'knee');
-  angleOffsets.shoulder = calculateAngleOffset('shoulder', 'hip');
-  angleOffsets.grip = calculateAngleOffset('grip', 'shoulder');
+  // Derive angles from calculated positions
+  const angleOffsets = {}
+
+  angleOffsets.knee = calculateAngleOffset(positions, 'knee', 'foot', skeletonInfo);
+  angleOffsets.hip = calculateAngleOffset(positions, 'hip', 'knee', skeletonInfo);
+  angleOffsets.shoulder = calculateAngleOffset(positions, 'shoulder', 'hip', skeletonInfo);
+  angleOffsets.grip = calculateAngleOffset(positions, 'grip', 'shoulder', skeletonInfo);
 
   const direction = cycleDirection(progress)
   const phase =

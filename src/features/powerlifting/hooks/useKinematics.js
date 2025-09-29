@@ -284,7 +284,6 @@ export const useKinematics = ({ liftType = 'Squat', manualAngleOffsets = {}, ani
     joints,
     limbs: skeleton.limbs,
     barPosition: finalBarPosition,
-    barOffset: manualBarOffset,
     torque,
     root: skeleton.root,
     rootPosition,
