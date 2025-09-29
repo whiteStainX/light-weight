@@ -35,6 +35,11 @@ export const liftData = {
       minY: 0,
       maxY: 550,
     },
+    limbLengths: {
+      shin: 42,
+      thigh: 40,
+      torso: 45,
+    },
   },
   Bench: {
     path: {
@@ -68,6 +73,14 @@ export const liftData = {
       maxX: 700,
       minY: 0,
       maxY: 500,
+    },
+    limbLengths: {
+      forearm: 28,
+      humerus: 30,
+    },
+    basePositions: {
+      cy: 320,
+      barBaseY: 320 + 7, // cy + cmToPx(7)
     },
   },
   Deadlift: {
@@ -108,6 +121,15 @@ export const liftData = {
       maxX: 650,
       minY: 0,
       maxY: 550,
+    },
+    limbLengths: {
+      shin: 42,
+      thigh: 40,
+      torso: 45,
+      arm: 70,
+    },
+    basePositions: {
+      barX: 410,
     },
   },
 };
