@@ -111,72 +111,7 @@ endPoint.x.toFixed(2)} ${endPoint.y.toFixed(2)} L ${wingRight.x.toFixed(2)} ${wi
     })
 }
 
-const computeSceneBounds = (joints = {}, barPosition, surfaces = {}) => {
-  let minX = Infinity
-  let maxX = -Infinity
-  let minY = Infinity
-  let maxY = -Infinity
 
-  const includePoint = (x, y) => {
-    if (!Number.isFinite(x) || !Number.isFinite(y)) return
-    minX = Math.min(minX, x)
-    maxX = Math.max(maxX, x)
-    minY = Math.min(minY, y)
-    maxY = Math.max(maxY, y)
-  }
-
-  Object.values(joints).forEach(({ x, y }) => includePoint(x, y))
-
-  if (barPosition) {
-    includePoint(barPosition.x, barPosition.y)
-    includePoint(barPosition.x - BAR_HALF_SPAN, barPosition.y)
-    includePoint(barPosition.x + BAR_HALF_SPAN, barPosition.y)
-  }
-
-  if (typeof surfaces.ground === 'number') {
-    includePoint(barPosition?.x ?? 0, surfaces.ground)
-  }
-
-  if (typeof surfaces.benchTop === 'number') {
-    includePoint(barPosition?.x ?? 0, surfaces.benchTop)
-    includePoint(barPosition?.x ?? 0, surfaces.benchTop + (surfaces.benchHeight ?? 0))
-  }
-
-  if (!Number.isFinite(minX) || !Number.isFinite(minY) || !Number.isFinite(maxX) || !Number.isFinite(maxY)) {
-    return {
-      minX: 0,
-      maxX: MIN_SCENE_WIDTH,
-      minY: 0,
-      maxY: MIN_SCENE_HEIGHT,
-    }
-  }
-
-  let expandedMinX = minX - SCENE_PADDING_X
-  let expandedMaxX = maxX + SCENE_PADDING_X
-  let expandedMinY = minY - SCENE_PADDING_Y
-  let expandedMaxY = maxY + SCENE_PADDING_Y
-
-  const width = expandedMaxX - expandedMinX
-  if (width < MIN_SCENE_WIDTH) {
-    const pad = (MIN_SCENE_WIDTH - width) / 2
-    expandedMinX -= pad
-    expandedMaxX += pad
-  }
-
-  const height = expandedMaxY - expandedMinY
-  if (height < MIN_SCENE_HEIGHT) {
-    const pad = (MIN_SCENE_HEIGHT - height) / 2
-    expandedMinY -= pad
-    expandedMaxY += pad
-  }
-
-  return {
-    minX: expandedMinX,
-    maxX: expandedMaxX,
-    minY: expandedMinY,
-    maxY: expandedMaxY,
-  }
-}
 
 const AnimationCanvas = ({
   title,
@@ -191,7 +126,7 @@ const AnimationCanvas = ({
   angles,
   sceneBounds,
 }) => {
-  const fallbackBounds = useMemo(
+  const viewBounds = useMemo(
     () =>
       sceneBounds ?? {
         minX: 0,
@@ -201,11 +136,6 @@ const AnimationCanvas = ({
       },
     [sceneBounds],
   )
-
-  const viewBounds = useMemo(() => {
-    if (sceneBounds) return sceneBounds
-    return computeSceneBounds(joints, barPosition, surfaces)
-  }, [barPosition, joints, sceneBounds, surfaces])
   const viewWidth = viewBounds.maxX - viewBounds.minX
   const viewHeight = viewBounds.maxY - viewBounds.minY
 
