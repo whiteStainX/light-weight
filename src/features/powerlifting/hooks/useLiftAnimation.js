@@ -113,22 +113,33 @@ const solveSquat = (progress, params = {}, skeletonInfo) => {
 const solveBench = (progress, params = {}, skeletonInfo) => {
   const p = cycleScalar(progress)
 
-  const cx = BAR_X
+  const cx = BAR_X // 400
   const cy = 320
 
   const barTravel = cmToPx(params.barTravel ?? 22)
-  const barBase = cy + cmToPx(7)
+  const barBase = cy + cmToPx(7) // 320 + 28 = 348
 
-  const gripSpan = cmToPx(params.gripSpan ?? 55)
-  const shoulderOffset = cmToPx(params.shoulderSet ?? 20)
-  const forearm = cmToPx(28)
-  const humerus = cmToPx(30)
+  const gripSpan = cmToPx(params.gripSpan ?? 55) // 220
+  const shoulderSetCm = params.shoulderSet ?? 20 // 20
+  const forearmLength = cmToPx(28) // 112
+  const humerusLength = cmToPx(30) // 120
 
-  const barPosition = { x: cx, y: barBase - barTravel * p }
-  const grip = { x: barPosition.x, y: barPosition.y } // Grip is now directly at barPosition
+  const barPosition = { x: cx, y: barBase - barTravel * p } // Bar Y is dynamic
 
-  const elbow = { x: grip.x, y: grip.y + forearm }
-  const shoulder = { x: grip.x - shoulderOffset, y: elbow.y - humerus }
+  // Horizontal positions
+  const gripX = cx - gripSpan / 2 // 290
+
+  const grip = { x: gripX, y: barPosition.y } // Grip Y follows bar, X is fixed
+  const elbow = { x: gripX, y: grip.y + forearmLength } // Elbow X follows grip, Y derived
+
+  // Dynamic Shoulder X position to create elbow tuck
+  const shoulderXOffsetStartCm = params.shoulderXOffsetStart ?? 2; // Shoulders slightly in at top
+  const shoulderXOffsetEndCm = params.shoulderXOffsetEnd ?? 10;   // Shoulders tucked in at bottom
+
+  const currentShoulderXOffsetCm = shoulderXOffsetStartCm + (shoulderXOffsetEndCm - shoulderXOffsetStartCm) * p;
+  const shoulderX = elbow.x - cmToPx(currentShoulderXOffsetCm); // Shoulder X moves horizontally
+
+  const shoulder = { x: shoulderX, y: elbow.y - humerusLength } // Shoulder Y derived from elbow.y and humerusLength
 
   // Derive angles from calculated positions
   const angleOffsets = {}
@@ -165,30 +176,51 @@ const solveBench = (progress, params = {}, skeletonInfo) => {
 const solveDeadlift = (progress, params = {}, skeletonInfo) => {
   const p = cycleScalar(progress)
 
+  const barX = 410; // Fixed horizontal bar position
+
   const barTravel = cmToPx(params.barTravel ?? 45)
   const startClearance = cmToPx(params.startClearance ?? 5)
-  const newBarX = 410; // Adjusted BAR_X for deadlift
-  const barPosition = { x: newBarX, y: ORIGIN_Y - (startClearance + barTravel * p) }
+  const barPosition = { x: barX, y: ORIGIN_Y - (startClearance + barTravel * p) }
 
-  const foot = { x: newBarX, y: ORIGIN_Y }
-  const kneeOffset = cmToPx(2)
-  const knee = { x: newBarX + kneeOffset, y: foot.y - safeSqrt(cmToPx(42) ** 2 - kneeOffset ** 2) }
+  const foot = { x: barX, y: ORIGIN_Y } // Foot X aligns with barX
 
-  const shoulderOffset = cmToPx(params.shoulderOffset ?? 6)
-  const shoulderX = newBarX + shoulderOffset
-  const shoulder = {
-    x: shoulderX,
-    y: barPosition.y - safeSqrt(cmToPx(70) ** 2 - shoulderOffset ** 2),
+  const shinLength = cmToPx(42);
+  const thighLength = cmToPx(40);
+  const torsoLength = cmToPx(45);
+  const armLength = cmToPx(70);
+
+  // Dynamic Knee Horizontal Position (relative to foot)
+  const kneeForwardStartCm = params.kneeForwardStart ?? 5; // Knees slightly forward at start
+  const kneeForwardMidCm = params.kneeForwardMid ?? 0;   // Knees back as bar passes
+  const kneeForwardEndCm = params.kneeForwardEnd ?? 2;   // Knees slightly forward at lockout
+
+  let currentKneeForwardCm;
+  if (p < 0.5) {
+    currentKneeForwardCm = kneeForwardStartCm + (kneeForwardMidCm - kneeForwardStartCm) * (p * 2);
+  } else {
+    currentKneeForwardCm = kneeForwardMidCm + (kneeForwardEndCm - kneeForwardMidCm) * ((p - 0.5) * 2);
   }
+  const kneeForward = cmToPx(currentKneeForwardCm);
 
-  const hipSetback = cmToPx(params.hipSetback ?? 24)
-  const hipX = newBarX - hipSetback
-  const hip = {
-    x: hipX,
-    y: shoulder.y + safeSqrt(cmToPx(45) ** 2 - (shoulderX - hipX) ** 2),
-  }
+  const kneeX = foot.x + kneeForward;
+  const kneeY = foot.y - safeSqrt(shinLength * shinLength - kneeForward * kneeForward); // Inverse kinematics for kneeY
 
-  const grip = { x: newBarX, y: barPosition.y }; // Grip aligns with newBarX and barPosition.y
+  // Dynamic Hip Horizontal Position (relative to bar)
+  const hipSetbackStartCm = params.hipSetbackStart ?? 24;
+  const hipSetbackEndCm = params.hipSetbackEnd ?? 10;
+  const currentHipSetbackCm = hipSetbackStartCm + (hipSetbackEndCm - hipSetbackStartCm) * p;
+  const hipX = barX - cmToPx(currentHipSetbackCm); // Hip X relative to barX
+
+  const hipDX = hipX - kneeX;
+  const hipY = kneeY - safeSqrt(thighLength * thighLength - hipDX * hipDX); // Inverse kinematics for hipY
+
+  // Shoulder Horizontal Position (derived to maintain torso angle relative to bar)
+  const shoulderOffsetCm = params.shoulderOffset ?? 6; // Constant offset for arm length/shoulder position
+  const shoulderDX = barX + cmToPx(shoulderOffsetCm) - hipX; // Horizontal distance from hip to shoulder relative to bar
+  const shoulderX = hipX + shoulderDX;
+  const shoulderY = hipY - safeSqrt(torsoLength * torsoLength - shoulderDX * shoulderDX); // Inverse kinematics for shoulderY
+
+  const grip = { x: barX, y: barPosition.y };
 
   // Derive angles from calculated positions
   const angleOffsets = {}
@@ -203,9 +235,9 @@ const solveDeadlift = (progress, params = {}, skeletonInfo) => {
 
   const positions = {
     foot,
-    knee,
-    hip,
-    shoulder,
+    knee: { x: kneeX, y: kneeY },
+    hip: { x: hipX, y: hipY },
+    shoulder: { x: shoulderX, y: shoulderY },
     grip,
   };
 
