@@ -8,7 +8,7 @@ const MIN_SCENE_WIDTH = 420
 const MIN_SCENE_HEIGHT = 420
 const BAR_HALF_SPAN = 60
 
-const toRadians = (degrees) => (degrees * Math.PI) / 180
+export const toRadians = (degrees) => (degrees * Math.PI) / 180
 const toDegrees = (radians) => (radians * 180) / Math.PI
 
 const computeSceneFrame = (path = {}, anchors = {}, surfaces = {}) => {
@@ -113,7 +113,7 @@ const resolveSkeleton = (liftType) => {
   const potentialRoots = limbs.map(({ from }) => from)
   const root = potentialRoots.find((candidate) => !(candidate in parentMap)) ?? limbs[0]?.from
 
-  const sceneBounds = computeSceneFrame(path, anchors, surfaces)
+  const sceneBounds = data.sceneBounds ?? computeSceneFrame(path, anchors, surfaces)
 
   return {
     basePath: path,
@@ -219,62 +219,58 @@ export const __testing__ = {
   toDegrees,
 }
 
-export const useKinematics = ({ liftType = 'Squat', jointOverrides = {} } = {}) => {
+export const useKinematics = ({ liftType = 'Squat', manualAngleOffsets = {}, animatedAngleOffsets = {}, animatedBarPosition = { x: 0, y: 0 }, manualBarOffset = { x: 0, y: 0 } } = {}) => {
   const skeleton = useMemo(() => resolveSkeleton(liftType), [liftType])
 
   const rootPosition = useMemo(() => {
-    const overridePosition = jointOverrides[skeleton.root]?.position
+    const overridePosition = manualAngleOffsets[skeleton.root]?.position
     return overridePosition ? { ...overridePosition } : { ...skeleton.basePath[skeleton.root] }
-  }, [jointOverrides, skeleton.basePath, skeleton.root])
+  }, [manualAngleOffsets, skeleton.basePath, skeleton.root])
 
-  const angleOffsets = useMemo(() => {
+  const combinedAngleOffsets = useMemo(() => {
     const offsets = {}
     Object.keys(skeleton.defaultAngles).forEach((joint) => {
-      const overrideOffset = jointOverrides[joint]?.angleOffset ?? 0
-      offsets[joint] = overrideOffset
+      const manualOffsetDegrees = manualAngleOffsets[joint] ?? 0
+      const manualOffsetRadians = toRadians(manualOffsetDegrees)
+      const animatedOffset = animatedAngleOffsets[joint] ?? 0
+      offsets[joint] = manualOffsetRadians + animatedOffset
     })
     return offsets
-  }, [jointOverrides, skeleton.defaultAngles])
-
-  const barOffset = useMemo(() => jointOverrides.bar?.offset ?? { x: 0, y: 0 }, [jointOverrides])
+  }, [animatedAngleOffsets, manualAngleOffsets, skeleton.defaultAngles])
 
   const joints = useMemo(
-    () => computeJointPositions(skeleton, angleOffsets, rootPosition, jointOverrides),
-    [angleOffsets, jointOverrides, rootPosition, skeleton],
+    () => {
+      return computeJointPositions(skeleton, combinedAngleOffsets, rootPosition, manualAngleOffsets)
+    },
+    [combinedAngleOffsets, manualAngleOffsets, rootPosition, skeleton],
   )
 
-  const barBase = useMemo(() => {
-    const anchorConfig = skeleton.anchors?.bar
-    if (anchorConfig?.joint && joints?.[anchorConfig.joint]) {
-      const anchorPoint = joints[anchorConfig.joint]
-      const offset = anchorConfig.offset ?? { x: 0, y: 0 }
-      return {
-        x: anchorPoint.x + (offset.x ?? 0),
-        y: anchorPoint.y + (offset.y ?? 0),
+  const finalBarPosition = useMemo(
+    () => {
+      const anchorConfig = skeleton.anchors?.bar;
+      if (anchorConfig?.joint && joints?.[anchorConfig.joint]) {
+        const anchorPoint = joints[anchorConfig.joint];
+        const offset = anchorConfig.offset ?? { x: 0, y: 0 };
+        return {
+          x: anchorPoint.x + (offset.x ?? 0) + (manualBarOffset.x ?? 0),
+          y: anchorPoint.y + (offset.y ?? 0) + (manualBarOffset.y ?? 0),
+        };
       }
-    }
+      // If no anchor, use the animated bar position (plus manual offset)
+      return {
+        x: animatedBarPosition.x + (manualBarOffset.x ?? 0),
+        y: animatedBarPosition.y + (manualBarOffset.y ?? 0),
+      };
+    },
+    [animatedBarPosition, manualBarOffset, joints, skeleton.anchors?.bar],
+  );
 
-    if (skeleton.basePath.bar) {
-      return { ...skeleton.basePath.bar }
-    }
-
-    return { x: rootPosition.x, y: rootPosition.y }
-  }, [joints, rootPosition.x, rootPosition.y, skeleton.anchors?.bar, skeleton.basePath.bar])
-
-  const barPosition = useMemo(
-    () => ({
-      x: barBase.x + (barOffset.x ?? 0),
-      y: barBase.y + (barOffset.y ?? 0),
-    }),
-    [barBase.x, barBase.y, barOffset.x, barOffset.y],
-  )
-
-  const torque = useMemo(() => estimateTorque(joints, barPosition), [barPosition, joints])
+  const torque = useMemo(() => estimateTorque(joints, finalBarPosition), [finalBarPosition, joints])
 
   const angles = useMemo(() => {
     const entries = {}
     Object.entries(skeleton.defaultAngles).forEach(([joint, baseAngle]) => {
-      const offset = angleOffsets[joint] ?? 0
+      const offset = combinedAngleOffsets[joint] ?? 0
       entries[joint] = {
         base: Number(toDegrees(baseAngle).toFixed(1)),
         offset: Number(toDegrees(offset).toFixed(1)),
@@ -282,17 +278,17 @@ export const useKinematics = ({ liftType = 'Squat', jointOverrides = {} } = {}) 
       }
     })
     return entries
-  }, [angleOffsets, skeleton.defaultAngles])
+  }, [combinedAngleOffsets, skeleton.defaultAngles])
 
   return {
     joints,
     limbs: skeleton.limbs,
-    barPosition,
-    barOffset,
+    barPosition: finalBarPosition,
+    barOffset: manualBarOffset,
     torque,
     root: skeleton.root,
     rootPosition,
-    angleOffsets,
+    angleOffsets: combinedAngleOffsets,
     angles,
     surfaces: skeleton.surfaces,
     frontProfile: skeleton.frontProfile,

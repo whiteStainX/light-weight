@@ -29,6 +29,12 @@ export const liftData = {
       },
       crossLinks: ['hip', 'shoulder'],
     },
+    sceneBounds: {
+      minX: 150,
+      maxX: 650,
+      minY: 0,
+      maxY: 550,
+    },
   },
   Bench: {
     path: {
@@ -41,8 +47,9 @@ export const liftData = {
       { from: 'shoulder', to: 'elbow' },
       { from: 'elbow', to: 'grip' },
     ],
-    anchors: {},
-    surfaces: {
+    anchors: {
+      bar: { joint: 'grip', offset: { x: 0, y: 0 } },
+    },    surfaces: {
       benchTop: 360,
       benchHeight: 36,
     },
@@ -55,6 +62,12 @@ export const liftData = {
         bar: { follow: 'grip', offset: 4, min: 80, max: 100 },
       },
       crossLinks: ['shoulder'],
+    },
+    sceneBounds: {
+      minX: 100,
+      maxX: 700,
+      minY: 0,
+      maxY: 500,
     },
   },
   Deadlift: {
@@ -89,6 +102,12 @@ export const liftData = {
         bar: { follow: 'grip', offset: 4, min: 60, max: 96 },
       },
       crossLinks: ['hip', 'shoulder'],
+    },
+    sceneBounds: {
+      minX: 150,
+      maxX: 650,
+      minY: 0,
+      maxY: 550,
     },
   },
 };
