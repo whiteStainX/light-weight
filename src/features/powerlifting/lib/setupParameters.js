@@ -6,7 +6,7 @@ export const DEFAULT_SETUP_PARAMETERS = {
   },
   Bench: {
     gripSpan: 55,
-    barTravel: 22,
+    barTravel: 40,
     shoulderSet: 20,
   },
   Deadlift: {

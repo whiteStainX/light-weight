@@ -50,7 +50,7 @@ To streamline the architecture and improve biomechanical accuracy, the animation
 
 **Bench Press:**
 *   **Problem:** The stick figure was static, and the grip did not match the bar's position. This was due to the bar not being explicitly anchored to the `grip` joint in `liftData.js`.
-*   **Solution:** Added an explicit bar anchor to the `grip` joint in `liftData.Bench`. The `solveBench` function in `useLiftAnimation.js` was refined to ensure the `grip` joint's position directly corresponds to the bar's position, allowing `useKinematics` to correctly derive the bar's movement from the anchored joint.
+*   **Solution:** Corrected the J-curve implementation in `solveBench` by reversing the horizontal bar path to move towards the feet on descent, matching biomechanical diagrams. Increased the default `barTravel` parameter in `setupParameters.js` to provide a more realistic vertical range of motion. Refined the elbow tuck logic by adjusting the start and end angles for the shoulder-elbow segment, creating a more natural movement.
 
 **Deadlift:**
 *   **Problem:** The bar visually cut through the legs, and there was a potential architectural mismatch in how the bar's position was determined when anchored.

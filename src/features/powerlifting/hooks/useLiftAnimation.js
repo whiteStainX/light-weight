@@ -132,7 +132,7 @@ const solveBench = (progress, params = {}, skeletonInfo) => {
 
   // Bar position (J-curve)
   const barXOffsetStartCm = params.barXOffsetStart ?? 0; // Bar over shoulders at top
-  const barXOffsetEndCm = params.barXOffsetEnd ?? -5;   // Bar slightly back over chest at bottom
+  const barXOffsetEndCm = params.barXOffsetEnd ?? 8;   // Bar moves towards feet at bottom
 
   const currentBarXOffsetCm = barXOffsetStartCm + (barXOffsetEndCm - barXOffsetStartCm) * p;
   const currentBarX = cx + cmToPx(currentBarXOffsetCm);
