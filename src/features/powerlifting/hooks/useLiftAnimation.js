@@ -113,53 +113,34 @@ const solveSquat = (progress, params = {}, skeletonInfo) => {
 const solveBench = (progress, params = {}, skeletonInfo) => {
   const p = cycleScalar(progress)
 
-  const cx = BAR_X // 400
+  const cx = BAR_X // 400 (reference center)
   const cy = 320
 
-  const barTravel = cmToPx(params.barTravel ?? 22)
-  const barBase = cy + cmToPx(7) // 320 + 28 = 348
+  const barTravel = cmToPx(params.barTravel ?? 22) // 88px
+  const barBase = cy + cmToPx(7) // 348
 
-  const gripSpan = cmToPx(params.gripSpan ?? 55) // 220
-  const shoulderSetCm = params.shoulderSet ?? 20 // 20
-  const forearmLength = cmToPx(28) // 112
-  const humerusLength = cmToPx(30) // 120
+  // Target angle for elbow-grip segment (vertical forearm)
+  const targetGripAngle = toRadians(-90); // -90 degrees for vertical forearm
 
-  const barPosition = { x: cx, y: barBase - barTravel * p } // Bar Y is dynamic
+  // Target angle for shoulder-elbow segment (elbow tuck)
+  const shoulderElbowAngleStartDegrees = params.shoulderElbowAngleStart ?? 104; // Angle at top (close to default)
+  const shoulderElbowAngleEndDegrees = params.shoulderElbowAngleEnd ?? 95;   // Angle at bottom (tucked in)
 
-  // Horizontal positions
-  const gripX = cx - gripSpan / 2 // 290
+  const currentShoulderElbowAngleDegrees = shoulderElbowAngleStartDegrees + (shoulderElbowAngleEndDegrees - shoulderElbowAngleStartDegrees) * p;
+  const targetShoulderElbowAngle = toRadians(currentShoulderElbowAngleDegrees);
 
-  const grip = { x: gripX, y: barPosition.y } // Grip Y follows bar, X is fixed
-  const elbow = { x: gripX, y: grip.y + forearmLength } // Elbow X follows grip, Y derived
+  const angleOffsets = {};
+  angleOffsets.elbow = targetShoulderElbowAngle - skeletonInfo.defaultAngles.elbow;
+  angleOffsets.grip = targetGripAngle - skeletonInfo.defaultAngles.grip;
 
-  // Dynamic Shoulder X position to create elbow tuck
-  const shoulderXOffsetStartCm = params.shoulderXOffsetStart ?? 2; // Shoulders slightly in at top
-  const shoulderXOffsetEndCm = params.shoulderXOffsetEnd ?? 10;   // Shoulders tucked in at bottom
+  // Bar position (J-curve)
+  const barXOffsetStartCm = params.barXOffsetStart ?? 0; // Bar over shoulders at top
+  const barXOffsetEndCm = params.barXOffsetEnd ?? -5;   // Bar slightly back over chest at bottom
 
-  const currentShoulderXOffsetCm = shoulderXOffsetStartCm + (shoulderXOffsetEndCm - shoulderXOffsetStartCm) * p;
-  const shoulderX = elbow.x - cmToPx(currentShoulderXOffsetCm); // Shoulder X moves horizontally
+  const currentBarXOffsetCm = barXOffsetStartCm + (barXOffsetEndCm - barXOffsetStartCm) * p;
+  const currentBarX = cx + cmToPx(currentBarXOffsetCm);
 
-  const shoulder = { x: shoulderX, y: elbow.y - humerusLength } // Shoulder Y derived from elbow.y and humerusLength
-
-  // Derive angles from calculated positions
-  const angleOffsets = {}
-
-  const calculateAngleOffset = (jointName, parentName) => {
-    const parentPos = { x: positions[parentName].x, y: positions[parentName].y };
-    const jointPos = { x: positions[jointName].x, y: positions[jointName].y };
-    const currentAngle = Math.atan2(jointPos.y - parentPos.y, jointPos.x - parentPos.x);
-    const defaultAngle = skeletonInfo.defaultAngles[jointName] || 0;
-    return currentAngle - defaultAngle;
-  };
-
-  const positions = {
-    shoulder,
-    elbow,
-    grip,
-  };
-
-  angleOffsets.elbow = calculateAngleOffset('elbow', 'shoulder');
-  angleOffsets.grip = calculateAngleOffset('grip', 'elbow');
+  const barPosition = { x: currentBarX, y: barBase - barTravel * p }
 
   const phase =
     progress < 0.05
@@ -170,7 +151,7 @@ const solveBench = (progress, params = {}, skeletonInfo) => {
           ? 'Drive to lockout'
           : 'Hold & reset'
 
-  return { angleOffsets, barPosition: grip, phase }
+  return { angleOffsets, barPosition, phase }
 }
  
 const solveDeadlift = (progress, params = {}, skeletonInfo) => {
