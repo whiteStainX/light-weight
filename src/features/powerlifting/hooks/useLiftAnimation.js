@@ -110,34 +110,38 @@ const solveSquat = (progress, params = {}, skeletonInfo) => {
 const solveBench = (progress, params = {}, skeletonInfo) => {
   const p = cycleScalar(progress)
 
-  const cx = skeletonInfo.data.basePositions?.cx ?? BAR_X; // 400 (reference center)
-  const cy = skeletonInfo.data.basePositions?.cy ?? 320;
+  const { limbLengths, path } = skeletonInfo.data;
+  const shoulderPos = path.shoulder;
+  const humerusLength = cmToPx(limbLengths.humerus || 30);
+  const forearmLength = cmToPx(limbLengths.forearm || 28);
 
-  const barTravel = cmToPx(params.barTravel ?? 22) // 88px
-  const barBase = skeletonInfo.data.basePositions?.barBaseY ?? cy + cmToPx(7); // 348
+  // 1. Define the rotation of the humerus (shoulder-elbow segment)
+  const shoulderAngleStart = toRadians(params.shoulderAngleStart ?? 40);   // More tucked at top
+  const shoulderAngleEnd = toRadians(params.shoulderAngleEnd ?? 85); // Less tucked at bottom
 
-  // Target angle for elbow-grip segment (vertical forearm)
-  const targetGripAngle = toRadians(-90); // -90 degrees for vertical forearm
+  const currentShoulderAngle = shoulderAngleStart + (shoulderAngleEnd - shoulderAngleStart) * p;
 
-  // Target angle for shoulder-elbow segment (elbow tuck)
-  const shoulderElbowAngleStartDegrees = params.shoulderElbowAngleStart ?? 104; // Angle at top (close to default)
-  const shoulderElbowAngleEndDegrees = params.shoulderElbowAngleEnd ?? 95;   // Angle at bottom (tucked in)
+  // 2. Calculate joint positions using Forward Kinematics from the shoulder pivot
+  const elbowX = shoulderPos.x + humerusLength * Math.cos(currentShoulderAngle);
+  const elbowY = shoulderPos.y + humerusLength * Math.sin(currentShoulderAngle);
 
-  const currentShoulderElbowAngleDegrees = shoulderElbowAngleStartDegrees + (shoulderElbowAngleEndDegrees - shoulderElbowAngleStartDegrees) * p;
-  const targetShoulderElbowAngle = toRadians(currentShoulderElbowAngleDegrees);
+  // 3. Apply the vertical forearm constraint
+  const gripX = elbowX; // Grip is vertically aligned with elbow
+  const gripY = elbowY - forearmLength;
 
+  const positions = {
+    shoulder: shoulderPos,
+    elbow: { x: elbowX, y: elbowY },
+    grip: { x: gripX, y: gripY },
+  };
+
+  // 4. Derive angleOffsets from the calculated positions
   const angleOffsets = {};
-  angleOffsets.elbow = targetShoulderElbowAngle - skeletonInfo.defaultAngles.elbow;
-  angleOffsets.grip = targetGripAngle - skeletonInfo.defaultAngles.grip;
+  angleOffsets.elbow = calculateAngleOffset(positions, 'elbow', 'shoulder', skeletonInfo);
+  angleOffsets.grip = calculateAngleOffset(positions, 'grip', 'elbow', skeletonInfo);
 
-  // Bar position (J-curve)
-  const barXOffsetStartCm = params.barXOffsetStart ?? 0; // Bar over shoulders at top
-  const barXOffsetEndCm = params.barXOffsetEnd ?? 8;   // Bar moves towards feet at bottom
-
-  const currentBarXOffsetCm = barXOffsetStartCm + (barXOffsetEndCm - barXOffsetStartCm) * p;
-  const currentBarX = cx + cmToPx(currentBarXOffsetCm);
-
-  const barPosition = { x: currentBarX, y: barBase - barTravel * p }
+  // 5. Return the grip position as the bar position
+  const barPosition = positions.grip;
 
   const phase =
     progress < 0.05
