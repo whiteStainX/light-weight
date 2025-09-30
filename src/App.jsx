@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 
 import MainLayout from './components/layout/MainLayout';
 import VintageWindow from './components/layout/VintageWindow';
@@ -7,9 +7,25 @@ import AnimationCanvas from './features/powerlifting/components/AnimationCanvas'
 import VintageControlPanel from './features/powerlifting/components/VintageControlPanel';
 import { usePowerlifting } from './features/powerlifting/hooks/usePowerlifting';
 import { PARAMETER_DEFINITIONS, DEFAULT_SETUP_PARAMETERS } from './features/powerlifting/lib/setupParameters';
-import { PAVEL_QUOTES, PAVEL_ASCII_ART } from './features/powerlifting/lib/content';
 
 const App = () => {
+  const [pavelContent, setPavelContent] = useState({ quotes: [], ascii_art: '' });
+
+  useEffect(() => {
+    const fetchContent = async () => {
+      try {
+        const response = await fetch('http://127.0.0.1:8000/api/v1/content/pavel');
+        const data = await response.json();
+        setPavelContent({ quotes: data.quotes || [], ascii_art: data.ascii_art || '' });
+      } catch (error) {
+        console.error("Failed to fetch content:", error);
+        // You could set some default content here on error if you wanted
+      }
+    };
+
+    fetchContent();
+  }, []); // Empty dependency array means this runs once on mount
+
   const {
     LIFT_OPTIONS,
     selectedLift,
@@ -21,10 +37,11 @@ const App = () => {
   } = usePowerlifting();
 
   const cue = useMemo(() => {
-    const filteredQuotes = PAVEL_QUOTES.filter(q => q.toLowerCase().includes(selectedLift.toLowerCase()));
-    const quotePool = filteredQuotes.length > 0 ? filteredQuotes : PAVEL_QUOTES;
+    if (pavelContent.quotes.length === 0) return "..."; // Return a placeholder while loading
+    const filteredQuotes = pavelContent.quotes.filter(q => q.toLowerCase().includes(selectedLift.toLowerCase()));
+    const quotePool = filteredQuotes.length > 0 ? filteredQuotes : pavelContent.quotes;
     return quotePool[Math.floor(Math.random() * quotePool.length)];
-  }, [selectedLift]);
+  }, [selectedLift, pavelContent.quotes]);
 
   const parameterDefinitions = PARAMETER_DEFINITIONS[selectedLift] ?? [];
 
@@ -71,7 +88,7 @@ const App = () => {
       </div>
       <VintageWindow title="Coach's Cue" className="h-32 font-mono text-sm">
         <div className="flex items-center h-full">
-          <pre className="text-xs leading-none">{PAVEL_ASCII_ART}</pre>
+          <pre className="text-xs leading-none">{pavelContent.ascii_art}</pre>
           <div className="flex-1 pl-4">
             <Typewriter text={cue} />
           </div>
