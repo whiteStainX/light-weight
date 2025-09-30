@@ -1,6 +1,18 @@
 # Design Documentation
 
-This document tracks the design discussion and decisions for the light-weight project.
+This document tracks the design discussion and decisions for the light-weight project. It now preserves the original stick-figure animation concept for historical context and documents the transition to the charts-first redesign.
+
+## Transition to Charts-First Redesign
+
+Multiple contributors attempted to dial in the hand-built animation loop and sync the biomechanical numbers, but the approach never reached an accurate, repeatable state. To unblock the broader redesign, we are pivoting toward a data-driven experience centered on synchronized charts. The new product direction is captured in `_temp/redesign_global_context.md`, which serves as the implementation playbook for the refactor toward static datasets, shared cursors, and coach-style insights.
+
+### Goals for the Redesign
+
+* Replace the hand-tuned animation with Highcharts- or ECharts-powered time-series panels that render precomputed biomechanics for each lift scenario.
+* Preserve the vintage System 7 interface while expanding the control modules to include scenario selection, compare mode, and an insights panel.
+* Introduce lightweight hooks (`useDatasets`, `useSyncCursor`, `useInsights`) that coordinate data loading, cross-chart interaction, and contextual cues.
+
+The remaining sections capture the prior animation-focused design so that historical decisions and context remain accessible during the transition.
 
 ## Core Purpose
 
