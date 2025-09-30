@@ -27,3 +27,6 @@ dist-ssr
 # design*
 # Temporary screenshots
 # _temp/
+
+# Python
+.venv/
