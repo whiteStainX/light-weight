@@ -3,7 +3,7 @@ import { useMemo, useState, useEffect } from 'react';
 import MainLayout from './components/layout/MainLayout';
 import VintageWindow from './components/layout/VintageWindow';
 import Typewriter from './components/effects/Typewriter';
-import AnimationCanvas from './features/powerlifting/components/AnimationCanvas';
+import ChartCanvas from './features/powerlifting/components/ChartCanvas';
 import VintageControlPanel from './features/powerlifting/components/VintageControlPanel';
 import { usePowerlifting } from './features/powerlifting/hooks/usePowerlifting';
 import { PARAMETER_DEFINITIONS, DEFAULT_SETUP_PARAMETERS } from './features/powerlifting/lib/setupParameters';
@@ -48,20 +48,8 @@ const App = () => {
   return (
     <MainLayout>
       <div className="flex flex-1 min-h-0 gap-4">
-        <VintageWindow title="Animation" className="w-3/5">
-          <AnimationCanvas
-            title={`${selectedLift} torque study`}
-            joints={kinematics.joints}
-            limbs={kinematics.limbs}
-            barPosition={kinematics.barPosition}
-            rootPosition={kinematics.rootPosition ?? kinematics.joints?.[kinematics.root]}
-            torque={kinematics.torque}
-            progress={animation.progress}
-            phase={animation.phase}
-            surfaces={kinematics.surfaces}
-            angles={kinematics.angles}
-            sceneBounds={kinematics.sceneBounds}
-          />
+        <VintageWindow title="Analysis" className="w-3/5">
+          <ChartCanvas title={`${selectedLift} Analysis`} />
         </VintageWindow>
         <VintageWindow title="Controls" className="w-2/5 flex flex-col gap-4">
           <VintageControlPanel

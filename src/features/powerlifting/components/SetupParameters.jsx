@@ -1,45 +1,38 @@
-import Knob from './Knob';
+import React from 'react';
+import Stepper from './Stepper';
+import Select from './Select';
 
-const SetupParameters = ({ lift, definitions = [], values = {}, defaults = {}, onChange, onReset }) => {
-  if (!definitions.length) {
-    return null;
-  }
-
+const SetupParameters = ({ definitions, values, onParameterChange }) => {
   return (
-    <section className="flex flex-col gap-3 rounded border border-black/40 bg-white p-3 text-[10px] text-[#0c0c0c] shadow-[2px_2px_0_0_rgba(0,0,0,0.4)]">
-      <header className="flex items-center justify-between">
-        <div>
-          <p className="uppercase tracking-[0.3em] text-black/70">Setup parameters</p>
-          <p className="text-[9px] text-black/60">Fine-tune the {lift?.toLowerCase()} starting geometry.</p>
-        </div>
-        <button
-          type="button"
-          onClick={onReset}
-          className="rounded border border-black/40 px-2 py-1 text-[9px] uppercase tracking-[0.25em] text-[#0c0c0c] transition-colors hover:border-black"
-        >
-          Reset
-        </button>
-      </header>
-
-      <div className="grid grid-cols-3 grid-rows-2 gap-x-2 gap-y-4">
-        {definitions.map(({ key, label, description, min = 0, max = 1, step = 1 }) => {
-          const current = Number(values?.[key] ?? defaults?.[key] ?? min);
+    <div className="space-y-2">
+      {definitions.map(def => {
+        if (def.type === 'number') {
           return (
-            <div key={key} className="flex flex-col items-center">
-              <Knob
-                label={label}
-                value={current}
-                onChange={(value) => onChange?.(key, value)}
-                min={min}
-                max={max}
-                step={step}
-              />
-              {description && <p className="text-[8px] text-center mt-1 text-black/60">{description}</p>}
-            </div>
+            <Stepper
+              key={def.id}
+              label={def.name}
+              value={values[def.id]}
+              min={def.min}
+              max={def.max}
+              step={def.step}
+              unit={def.unit}
+              onChange={(value) => onParameterChange(def.id, value)}
+            />
           );
-        })} 
-      </div>
-    </section>
+        } else if (def.type === 'select') {
+          return (
+            <Select
+              key={def.id}
+              label={def.name}
+              value={values[def.id]}
+              options={def.options}
+              onChange={(value) => onParameterChange(def.id, value)}
+            />
+          );
+        }
+        return null;
+      })}
+    </div>
   );
 };
 

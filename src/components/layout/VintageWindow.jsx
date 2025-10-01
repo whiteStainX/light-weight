@@ -4,9 +4,9 @@ const VintageWindow = ({ title, children, className }) => {
   return (
     <div className={`vintage-window ${className}`}>
       <div className="vintage-window-title-bar">
-        <div className="vintage-window-title">{title}</div>
+        <span>{title}</span>
       </div>
-      <div className="vintage-window-content">
+      <div className="vintage-window-content bg-mac-dither">
         {children}
       </div>
     </div>

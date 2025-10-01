@@ -10,12 +10,15 @@ export const usePowerlifting = () => {
 
   const [manualOffsets, setManualOffsets] = useState({});
   const [manualBarOffset, setManualBarOffset] = useState({ x: 0, y: 0 });
-  const [setupParameters, setSetupParameters] = useState(() => createDefaultSetupState(LIFT_OPTIONS));
+  const [setupParameters, setSetupParameters] = useState(() => ({ ...DEFAULT_SETUP_PARAMETERS.shared, ...DEFAULT_SETUP_PARAMETERS[LIFT_OPTIONS[0]], }));
 
-  useEffect(() => {
-    setManualOffsets({});
-    setManualBarOffset({ x: 0, y: 0 });
-  }, [selectedLift]);
+  const handleSelectLift = (lift) => {
+    setSelectedLift(lift);
+    setSetupParameters(prev => ({
+      ...DEFAULT_SETUP_PARAMETERS.shared,
+      ...DEFAULT_SETUP_PARAMETERS[lift],
+    }));
+  };
 
   const activeParameters = setupParameters[selectedLift] ?? DEFAULT_SETUP_PARAMETERS[selectedLift] ?? {};
 
@@ -63,7 +66,7 @@ export const usePowerlifting = () => {
   return {
     LIFT_OPTIONS,
     selectedLift,
-    setSelectedLift,
+    setSelectedLift: handleSelectLift,
     activeParameters,
     kinematics,
     animation: {
