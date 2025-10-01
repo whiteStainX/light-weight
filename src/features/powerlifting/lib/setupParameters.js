@@ -4,6 +4,11 @@ export const DEFAULT_SETUP_PARAMETERS = {
     externalLoad: 100,
     stanceWidth: 'Medium',
   },
+  Simulation: {
+    gravity: 9.81,
+    integrationTimestep: 0.01,
+    solverTolerance: 1e-5,
+  },
   Squat: {
     barHeight: 155,
     barXOffset: 0,
@@ -23,7 +28,12 @@ export const PARAMETER_DEFINITIONS = {
   shared: [
     { id: 'bodyMass', name: 'Body Mass', type: 'number', unit: 'kg', min: 40, max: 200, step: 1 },
     { id: 'externalLoad', name: 'External Load', type: 'number', unit: 'kg', min: 20, max: 500, step: 1 },
-    { id: 'stanceWidth', type: 'select', name: 'Stance Width', options: ['Narrow', 'Medium', 'Wide'] },
+    { id: 'stanceWidth', name: 'Stance Width', type: 'select', options: ['Narrow', 'Medium', 'Wide'] },
+  ],
+  Simulation: [
+    { id: 'gravity', name: 'Gravity', type: 'knob', unit: 'm/s²', min: 1, max: 20, step: 0.1 },
+    { id: 'integrationTimestep', name: 'Timestep', type: 'knob', unit: 's', min: 0.001, max: 0.1, step: 0.001 },
+    { id: 'solverTolerance', name: 'Tolerance', type: 'knob', unit: '', min: 1e-6, max: 1e-3, step: 1e-6 },
   ],
   Squat: [
     { id: 'barHeight', name: 'Bar Height', type: 'number', unit: 'cm', min: 130, max: 180, step: 1 },

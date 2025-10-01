@@ -10,6 +10,23 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 
+const MiniChart = ({ data, title, dataKeys }) => (
+  <div className="w-1/2 h-1/2 p-2">
+    <h4 className="font-mono text-sm text-center">{title}</h4>
+    <ResponsiveContainer width="100%" height="90%">
+      <LineChart data={data} margin={{ top: 5, right: 20, left: -20, bottom: 5 }}>
+        <CartesianGrid stroke="#000000" strokeOpacity={0.2} strokeDasharray="3 3" />
+        <XAxis dataKey="time" hide={true} />
+        <YAxis stroke="#000000" tick={{ fontFamily: 'monospace', fontSize: 10 }} />
+        <Tooltip contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #000000', fontFamily: 'monospace', fontSize: 12 }} />
+        {dataKeys.map((key, i) => (
+          <Line key={key} type="monotone" dataKey={key} stroke="#000000" strokeWidth={2} dot={false} strokeDasharray={i % 2 === 1 ? "3 3" : ""} />
+        ))}
+      </LineChart>
+    </ResponsiveContainer>
+  </div>
+);
+
 const ChartCanvas = ({ title }) => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -19,19 +36,20 @@ const ChartCanvas = ({ title }) => {
       try {
         setLoading(true);
         const response = await fetch('http://127.0.0.1:8000/api/v1/simulate/placeholder', {
-          method: 'POST', // As defined in the plan
+          method: 'POST',
         });
         const result = await response.json();
-
-        // Recharts expects an array of objects, so we need to transform the data
         const transformedData = result.series.time.map((t, i) => ({
           time: t.toFixed(2),
           hip_angle: result.series.hip_angle[i],
           knee_angle: result.series.knee_angle[i],
           hip_moment: result.series.hip_moment[i],
           knee_moment: result.series.knee_moment[i],
+          grf_v: result.series.grf_v[i],
+          quad_activation: result.series.quad_activation[i],
+          glute_activation: result.series.glute_activation[i],
+          spine_comp: result.series.spine_comp[i],
         }));
-
         setData(transformedData);
       } catch (error) {
         console.error("Failed to fetch simulation data:", error);
@@ -39,51 +57,19 @@ const ChartCanvas = ({ title }) => {
         setLoading(false);
       }
     };
-
     fetchData();
   }, []);
 
   if (loading) {
-    return (
-      <div className="w-full h-full flex items-center justify-center font-mono">
-        Loading Simulation Data...
-      </div>
-    );
+    return <div className="w-full h-full flex items-center justify-center font-mono">Loading Simulation Data...</div>;
   }
 
   return (
-    <div className="w-full h-full p-4">
-      <ResponsiveContainer width="100%" height="100%">
-        <LineChart
-          data={data}
-          margin={{
-            top: 5,
-            right: 20,
-            left: -10,
-            bottom: 5,
-          }}
-        >
-          <CartesianGrid stroke="#000000" strokeOpacity={0.3} strokeDasharray="3 3" />
-          <XAxis 
-            dataKey="time"
-            stroke="#000000"
-            tick={{ fontFamily: 'monospace', fontSize: 12 }}
-            label={{ value: 'Time (s)', position: 'insideBottom', dy: 10, fontFamily: 'monospace', fontSize: 12 }}
-          />
-          <YAxis 
-            stroke="#000000"
-            tick={{ fontFamily: 'monospace', fontSize: 12 }}
-            label={{ value: 'Angle (°)', angle: -90, position: 'insideLeft', dx: -10, fontFamily: 'monospace', fontSize: 12 }}
-          />
-          <Tooltip 
-            contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #000000', fontFamily: 'monospace' }}
-            labelStyle={{ fontFamily: 'monospace' }}
-          />
-          <Legend wrapperStyle={{ fontFamily: 'monospace', fontSize: 12 }} />
-          <Line type="monotone" dataKey="hip_angle" stroke="#000000" strokeWidth={2} dot={false} />
-          <Line type="monotone" dataKey="knee_angle" stroke="#000000" strokeWidth={2} strokeDasharray="5 5" dot={false} />
-        </LineChart>
-      </ResponsiveContainer>
+    <div className="w-full h-full flex flex-wrap">
+      <MiniChart data={data} title="Joint Angles (°)" dataKeys={['hip_angle', 'knee_angle']} />
+      <MiniChart data={data} title="Joint Moments (Nm)" dataKeys={['hip_moment', 'knee_moment']} />
+      <MiniChart data={data} title="Muscle Activation (%)" dataKeys={['quad_activation', 'glute_activation']} />
+      <MiniChart data={data} title="Forces (N)" dataKeys={['grf_v', 'spine_comp']} />
     </div>
   );
 };

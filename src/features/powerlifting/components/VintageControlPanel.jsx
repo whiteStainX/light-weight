@@ -1,24 +1,19 @@
 import React from 'react';
 import Stepper from './Stepper';
 import SetupParameters from './SetupParameters';
-import Select from './Select'; // Import the new Select component
 
 const VintageControlPanel = ({
   lifts,
   selectedLift,
   onSelectLift,
   definitions,
-  values,
-  defaults,
+  values, // This is now the full nested state object
   onSetupParameterChange,
   onResetSetupParameters,
-  isPlaying,
-  onTogglePlay,
-  tempo,
-  onTempoChange,
 }) => {
 
   const sharedDefinitions = definitions.shared ?? [];
+  const simulationDefinitions = definitions.Simulation ?? [];
   const liftSpecificDefinitions = definitions[selectedLift] ?? [];
 
   return (
@@ -41,9 +36,8 @@ const VintageControlPanel = ({
         <h3 className="panel-title">Subject & Load</h3>
         <SetupParameters
           definitions={sharedDefinitions}
-          values={values}
-          defaults={defaults.shared ?? {}}
-          onParameterChange={onSetupParameterChange}
+          values={values.shared} // Pass the correct slice of state
+          onParameterChange={(param, value) => onSetupParameterChange('shared', param, value)}
         />
       </div>
 
@@ -51,24 +45,26 @@ const VintageControlPanel = ({
         <h3 className="panel-title">Technique Parameters</h3>
         <SetupParameters
           definitions={liftSpecificDefinitions}
-          values={values}
-          defaults={defaults[selectedLift] ?? {}}
-          onParameterChange={onSetupParameterChange}
+          values={values[selectedLift]} // Pass the correct slice of state
+          onParameterChange={(param, value) => onSetupParameterChange(selectedLift, param, value)}
         />
-        <button onClick={onResetSetupParameters} className="font-mono text-sm text-center w-full mt-2">
+        <button onClick={() => onResetSetupParameters(selectedLift)} className="font-mono text-sm text-center w-full mt-2">
           Reset to Default
         </button>
       </div>
 
       <div className="panel-group">
-        <h3 className="panel-title">Playback</h3>
-        <div className="flex items-center justify-between">
-          <button onClick={onTogglePlay} className="font-mono text-lg border-2 border-black px-4 py-1 w-32">
-            {isPlaying ? 'Pause' : 'Play'}
-          </button>
-          <Stepper label="Tempo" value={tempo} min={0.1} max={2.0} step={0.1} onChange={onTempoChange} />
+        <h3 className="panel-title">Simulation</h3>
+        <div className="flex justify-around">
+          <SetupParameters
+            definitions={simulationDefinitions}
+            values={values.Simulation} // Pass the correct slice of state
+            onParameterChange={(param, value) => onSetupParameterChange('Simulation', param, value)}
+          />
         </div>
       </div>
+
+
     </div>
   );
 };

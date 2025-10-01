@@ -30,9 +30,8 @@ const App = () => {
     LIFT_OPTIONS,
     selectedLift,
     setSelectedLift,
-    activeParameters,
+    setupParameters, // This was missing
     kinematics,
-    animation,
     controls,
   } = usePowerlifting();
 
@@ -43,7 +42,6 @@ const App = () => {
     return quotePool[Math.floor(Math.random() * quotePool.length)];
   }, [selectedLift, pavelContent.quotes]);
 
-  const parameterDefinitions = PARAMETER_DEFINITIONS[selectedLift] ?? [];
 
   return (
     <MainLayout>
@@ -56,15 +54,11 @@ const App = () => {
             lifts={LIFT_OPTIONS}
             selectedLift={selectedLift}
             onSelectLift={setSelectedLift}
-            definitions={parameterDefinitions}
-            values={activeParameters}
-            defaults={DEFAULT_SETUP_PARAMETERS[selectedLift] ?? {}}
+            definitions={PARAMETER_DEFINITIONS} // Pass the whole object
+            values={setupParameters} // Pass the whole nested object
+            defaults={DEFAULT_SETUP_PARAMETERS}
             onSetupParameterChange={controls.handleSetupParameterChange}
             onResetSetupParameters={controls.handleResetSetupParameters}
-            isPlaying={animation.isPlaying}
-            onTogglePlay={animation.togglePlay}
-            tempo={animation.tempo}
-            onTempoChange={animation.setTempo}
             angles={kinematics.angles}
             manualOffsets={controls.manualOffsets}
             onAngleOffsetChange={controls.handleAngleOffsetChange}
