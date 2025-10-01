@@ -1,137 +1,191 @@
-# Design Documentation
+# Project Blueprint: Light-Weight
 
-This document tracks the design discussion and decisions for the light-weight project. It now preserves the original stick-figure animation concept for historical context and documents the transition to the charts-first redesign.
+**Version:** 2.0
+**Status:** In Progress
 
-## Transition to Charts-First Redesign
+---
 
-Multiple contributors attempted to dial in the hand-built animation loop and sync the biomechanical numbers, but the approach never reached an accurate, repeatable state. To unblock the broader redesign, we are pivoting toward a data-driven experience centered on synchronized charts. The new product direction is captured in `_temp/redesign_global_context.md`, which serves as the implementation playbook for the refactor toward static datasets, shared cursors, and coach-style insights.
+## 1. Vision
 
-### Goals for the Redesign
+To create a web-based application that provides data-driven, scientific feedback on powerlifting technique. Users can define or adjust lifting parameters and receive an accurate biomechanical analysis, helping them optimize performance and reduce injury risk.
 
-* Replace the hand-tuned animation with Highcharts- or ECharts-powered time-series panels that render precomputed biomechanics for each lift scenario.
-* Preserve the vintage System 7 interface while expanding the control modules to include scenario selection, compare mode, and an insights panel.
-* Introduce lightweight hooks (`useDatasets`, `useSyncCursor`, `useInsights`) that coordinate data loading, cross-chart interaction, and contextual cues.
+---
 
-The remaining sections capture the prior animation-focused design so that historical decisions and context remain accessible during the transition.
+## 2. Development Roadmap
 
-## Core Purpose
+This project will be developed in four stages, building from a UI-focused prototype to a full-fledged cloud application. This approach allows for parallel exploration of the frontend design and the backend's technical capabilities (OpenSim).
 
-1.  **Interactive Animation:** Create a clean, interactive, animated illustration of the three main powerlifting exercises: Squat, Bench Press, and Deadlift.
-2.  **Biomechanical Insight:** Illustrate joint movement, bar movement, and display calculated torque values. The goal is to help athletes understand optimal technique.
-3.  **Reference Material:** The principles are influenced by Pavel Tsatsouline's books, "Power to the People" and "Beyond Bodybuilding."
+### Stage 0: UI Prototype & Backend Mock (Current Stage)
 
-## Technical Implementation
+**Objective:** Build a high-fidelity UI and a placeholder backend to rapidly iterate on the user experience without being blocked by complex simulation logic.
 
-1.  **Kinematics:** Use fixed limb segment lengths with simple inverse kinematics, aligned with the initial hand sketches. This will ensure realistic bar and joint motion.
-2.  **Views:** The application will feature both side and front views for each lift.
-    *   **Squat/Deadlift:** Standard side and front perspectives.
-    *   **Bench Press:** Side view and a front view from the spotter's perspective.
-3.  **Data Display:** Key metrics, such as torque, will be displayed numerically alongside the animation.
-4.  **User Configuration:** Users will be able to adjust certain parameters to see how they affect the movement and metrics.
+-   **Strategy:** Work from both ends towards the middle. Design the ideal UI while simultaneously researching OpenSim's capabilities.
+-   **Backend:** Create a placeholder API endpoint (`/api/v1/simulate/placeholder`) that returns hardcoded, but correctly formatted, JSON data mimicking the final schema.
+-   **Frontend:** Redesign the UI to be chart-centric. Replace the animation canvas with components that fetch and visualize the placeholder data. Refine the System 7 aesthetic.
+-   **Success Criterion:** The frontend is fully functional and visually polished, powered by a fake backend. This allows for user testing and design refinement early in the process.
 
-### Animation Logic Refactor
+### Stage 1: Synchronous Localhost (The Technical Prototype)
 
-**Problem:**
-Initially, the animation system suffered from an architectural inconsistency. The `useLiftAnimation` hook's solver functions (`solveSquat`, `solveBench`, `solveDeadlift`) directly calculated absolute joint positions. These positions were then used to *derive* joint angle offsets, which were subsequently fed into `useKinematics.js` to perform *forward kinematics* and re-calculate joint positions. This created a redundant and inverted kinematic chain, making the system overly complex, harder to debug, and less flexible for future biomechanical enhancements.
+**Objective:** Build a working, end-to-end proof of concept on a single machine to validate the core simulation logic.
 
-Furthermore, the dynamic calculation of `sceneBounds` within `AnimationCanvas.jsx` based on the current joint positions caused the animation viewport to zoom and shift during playback, leading to a jarring user experience.
+-   **Architecture:** React Frontend <--> FastAPI Server (with OpenSim).
+-   **Key Tasks:**
+    1.  Integrate OpenSim into the backend.
+    2.  Replace the placeholder API with a real endpoint that runs a synchronous OpenSim analysis.
+    3.  Connect the existing frontend to this real endpoint, handling the loading state.
+-   **Success Criterion:** A user can trigger a real simulation from the browser and see the resulting data in a chart.
 
-**Solution:**
-To streamline the architecture and improve biomechanical accuracy, the animation logic was refactored as follows:
+### Stage 2: Asynchronous Localhost (The MVP)
 
-1.  **Decoupled Kinematic Chain:**
-    *   `useLiftAnimation.js` was refactored to make its `solver` functions (`solveSquat`, `solveBench`, `solveDeadlift`) directly output *joint angle offsets* (in radians) and the *bar position* based on the animation `progress`.
-    *   `useKinematics.js` was made solely responsible for performing *forward kinematics*. It now takes these animated angle offsets and bar position, combines them with any manual overrides, and calculates the final absolute joint positions and bar position.
-    *   This ensures a clear, unidirectional kinematic flow: Animation (angles) -> Kinematics (positions) -> Rendering.
+**Objective:** Refactor the prototype into a robust, non-blocking application that can handle long-running tasks gracefully.
 
-2.  **Static Scene Bounds:**
-    *   To prevent the animation viewport from zooming and shifting, static `sceneBounds` were pre-defined for each lift type in `liftData.js`.
-    *   `useKinematics.js` was updated to use these static `sceneBounds` if available, ensuring a consistent and stable viewport throughout the animation.
-    *   The redundant `computeSceneBounds` function was removed from `AnimationCanvas.jsx`, which now directly consumes the static `sceneBounds` prop.
+-   **Architecture:** Introduce Celery and Redis to decouple the API from the simulation engine.
+-   **Key Tasks:**
+    1.  Move the OpenSim logic into a Celery task.
+    2.  Refactor the API to be asynchronous (submit job -> poll status -> fetch results).
+    3.  Update the frontend to follow the async flow.
+    4.  Containerize the entire stack with Docker.
+-   **Success Criterion:** The web app remains responsive during a simulation. The entire stack can be launched with `docker-compose up`.
 
-**Key Bug Fixes During Refactor:**
+### Stage 3: Full-Fledged Cloud Deployment (Production)
 
-*   **Variable Destructuring Mismatch:** A `ReferenceError` occurred in `usePowerlifting.js` because the destructuring of the `useLiftAnimation` hook's return value used incorrect variable names (`angleOffsets` and `barPosition` instead of `joints` and `barOffset`). This resulted in `animatedAngleOffsets` and `animatedBarPosition` being `undefined`, causing the animation to appear static. This was resolved by correcting the destructuring assignment.
-*   **Unit and Structure Mismatch for Manual Overrides:** The manual joint angle adjustments from the UI (`manualOffsets` in degrees) were not being correctly applied. `useKinematics.js` expected a different data structure (`{ jointName: { angleOffset: radians } }`) and unit (radians) than what was being passed (`{ jointName: degrees }`). This was fixed by:
-    *   Renaming the prop in `useKinematics.js` to `manualAngleOffsets` for clarity.
-    *   Modifying `useKinematics.js` to directly access the degree value from `manualAngleOffsets[joint]`.
-    *   Converting the manual degree offset to radians before adding it to the animated radian offset.
-    *   Adjusting `usePowerlifting.js` to pass `manualOffsets` directly as `manualAngleOffsets`.
+**Objective:** Deploy the application to the cloud, making it scalable, reliable, and publicly accessible.
 
-### Lift-Specific Kinematics Refinements
+-   **Architecture:** A fully managed, scalable cloud infrastructure (e.g., AWS, GCP).
+-   **Key Tasks:**
+    1.  Set up a CI/CD pipeline (e.g., GitHub Actions).
+    2.  Provision managed cloud services (e.g., RDS for database, ElastiCache for Redis).
+    3.  Implement caching, logging, and monitoring.
+-   **Success Criterion:** The application is live on a public URL and the development-to-deployment process is fully automated.
 
-**Bench Press:**
-*   **Problem:** The stick figure was static, and the grip did not match the bar's position. This was due to the bar not being explicitly anchored to the `grip` joint in `liftData.js`.
-*   **Solution:** Corrected the J-curve implementation in `solveBench` by reversing the horizontal bar path to move towards the feet on descent, matching biomechanical diagrams. Increased the default `barTravel` parameter in `setupParameters.js` to provide a more realistic vertical range of motion. Refined the elbow tuck logic by adjusting the start and end angles for the shoulder-elbow segment, creating a more natural movement.
+---
 
-**Deadlift:**
-*   **Problem:** The bar visually cut through the legs, and there was a potential architectural mismatch in how the bar's position was determined when anchored.
-*   **Solution:** Adjusted the horizontal `BAR_X` position in `solveDeadlift` (within `useLiftAnimation.js`) to place the bar slightly in front of the legs, improving biomechanical accuracy and preventing visual overlap. The `solveDeadlift` function was further refined to adopt a squat-like kinematic approach for horizontal joint positioning. This involves defining dynamic horizontal offsets for the knee, hip, and shoulder relative to the fixed `BAR_X` throughout the lift. This ensures the bar path remains consistently vertical relative to the body, addressing the perception of horizontal bar movement. The `useKinematics.js` logic for bar positioning was made more robust: if an anchor is defined, the bar's position is derived from the anchored joint's position plus any manual offset; otherwise, it uses the animated bar position. This ensures correct bar-grip synchronization and consistent behavior across lifts.
+## 3. System Architecture
 
-### Data Flow Architecture
-
-The application's data flow is designed to be unidirectional, ensuring a clear and predictable state management process. The `usePowerlifting` hook acts as the central controller, orchestrating the flow of data between user inputs, animation logic, and the final kinematic calculations.
+### 3.1. High-Level Diagram
 
 ```
-[ VintageControlPanel (UI) ]
-        |
-        | (User Events: e.g., onSelectLift, onTempoChange)
-        v
-+---------------------------------+
-|      usePowerlifting.js         |
-|---------------------------------|
-| - Manages all application state |
-|   (selectedLift, parameters,    |
-|    manualOffsets, etc.)         |
-| - Contains all event handlers   |
-|                                 |-----> [ useLiftAnimation.js ]
-+---------------------------------+       | (Receives liftType, params)
-        |                                 |
-        | (Passes down props)             | - Calculates animatedAngleOffsets
-        v                                 | - Calculates animatedBarPosition
-+---------------------------------+       |
-|        useKinematics.js         | <-----| (Returns animation data)
-|---------------------------------|
-| - Receives animated data and    |
-|   manual overrides              |
-| - Resolves skeleton from        |
-|   liftData.js                   |
-| - Computes final joint          |
-|   positions (Forward Kinematics)|
-+---------------------------------+
-        |
-        | (Returns final kinematics: joints, barPosition, etc.)
-        v
-[ AnimationCanvas.jsx (Rendering) ]
-        |
-        v
-[ StickFigure.jsx (SVG) ]
+          +--------------------+
+          |   React Frontend   |
+          | (System 7 UI,      |
+          |  Charts, Insights) |
+          +---------+----------+
+                    |
+                    v
+          +--------------------+
+          |  FastAPI Backend   |
+          |   (REST API)       |
+          +---------+----------+
+                    |
+             Async job queue
+          +--------------------+
+          |   Celery Workers   |
+          | (Python + OpenSim) |
+          +---------+----------+
+                    |
+                    v
+          +--------------------+
+          |  OpenSim Engine    |
+          | (Python API,       |
+          |  .osim models)     |
+          +--------------------+
 ```
 
-### Folder Structure
+### 3.2. Backend Job Flow
 
 ```
-src/
-├── features/
-│   └── powerlifting/
-│       ├── components/
-│       │   ├── AnimationCanvas.jsx  // Renders the main SVG animation
-│       │   ├── ControlModule.jsx    // Reusable component for bordered sections
-│       │   ├── Stepper.jsx          // Compact +/- value adjuster
-│       │   ├── StickFigure.jsx      // The animated stick-figure component
-│       │   └── VintageControlPanel.jsx // The main control panel with vintage UI
-│       ├── hooks/
-│       │   ├── useKinematics.js     // Logic for calculating joint positions/torques
-│       │   └── usePowerlifting.js   // Custom hook encapsulating app logic
-│       └── lib/
-│           ├── content.js           // Static content like quotes and ASCII art
-│           ├── liftData.js
-│           └── setupParameters.js
-├── components/
-│   ├── effects/
-│   │   └── Typewriter.jsx         // Component for typing text effect
-│   └── layout/
-│       ├── MainLayout.jsx         // Main application layout
-│       └── VintageWindow.jsx      // Component for vintage window frames
-└── App.jsx                        // Main app component, now a clean layout container
+[Frontend Request]
+      |
+      v
+[FastAPI Endpoint] --> [Celery Queue] --> [Worker executes OpenSim job]
+      |                                            |
+      |                                            v
+      |                                [Generate .sto/.mot files]
+      |                                            |
+      |                                            v
+      |                                [Convert to JSON schema]
+      |                                            |
+      +--------------------------------------------+
+                      [Frontend fetches JSON + renders charts]
+```
+
+### 3.3. Technology Stack
+
+-   **Frontend:** React, Tailwind CSS, Chart.js
+-   **Backend API:** Python, FastAPI, Pydantic
+-   **Simulation Engine:** OpenSim Python API
+-   **Asynchronous Tasks:** Celery
+-   **Message Broker & Cache:** Redis
+-   **Database:** SQLite (local), PostgreSQL (production)
+-   **DevOps:** Docker, Docker Compose, GitHub Actions
+
+---
+
+## 4. Technical Details
+
+### 4.1. Proposed Folder Structure
+
+```
+light-weight/
+├─ backend/              # Python backend
+├─ frontend/             # React frontend (current root)
+├─ sim/                  # Simulation models and assets
+│  ├─ models/
+│  └─ config/
+└─ design/               # Design documents
+```
+
+### 4.2. API JSON Schema (The Contract)
+
+This schema defines the structure of the data passed from the backend to the frontend.
+
+```json
+{
+  "meta": {
+    "lift": "squat",
+    "variant": "highbar",
+    "load_pct_1rm": 80,
+    "fps": 100,
+    "subject": "generic_m_75kg",
+    "source": "opensim",
+    "version": "1.0.0"
+  },
+  "events": [
+    {"name":"descent","t0":0.12,"t1":0.48},
+    {"name":"bottom","t":0.48},
+    {"name":"sticking","t":0.63},
+    {"name":"lockout","t":0.98}
+  ],
+  "series": {
+    "time": [0.00, 0.01, ...],
+    "hip_angle": [...],
+    "knee_angle": [...],
+    "hip_moment": [...],
+    "knee_moment": [...],
+    "grf_v": [...],
+    "quad_activation": [...],
+    "glute_activation": [...],
+    "spine_comp": [...]
+  }
+}
+```
+
+### 4.3. Example Worker Code (Conceptual)
+
+```python
+# This is a conceptual example for Stage 1+
+import opensim as osim
+import pandas as pd
+
+def run_lift_analysis(model_path, coords_mot, external_loads_xml):
+    # Load model and run various OpenSim tools
+    model = osim.Model(model_path)
+    idtool = osim.InverseDynamicsTool()
+    # ... setup and run tools ...
+
+    # Convert output .sto files to a JSON-friendly format
+    table = osim.TimeSeriesTable("work/id.sto")
+    df = table.getAsPandasDataFrame()
+
+    return df.to_dict(orient='list')
 ```

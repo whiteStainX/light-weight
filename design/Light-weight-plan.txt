@@ -1,0 +1,63 @@
+Project Blueprint: "Light-Weight" Biomechanical Analysis Platform
+Current repo: https://github.com/whiteStainX/light-weight
+Vision: To create a web-based application that provides data-driven, scientific feedback on powerlifting technique. Users can define or adjust lifting parameters and receive an accurate biomechanical analysis, helping them optimize performance and reduce injury risk.
+1. Final System Architecture
+The application will be built on a decoupled, asynchronous, and scalable cloud-native architecture. This design ensures the user interface remains fast and responsive while the computationally heavy simulations are handled efficiently in the background.
+Core Components:
+• Frontend Client: A React/Tailwind single-page application (SPA) that handles all user interaction and data visualization.
+• API Server: A lightweight Python (FastAPI) server that acts as the gateway. It validates user requests, manages simulation jobs, and serves results.
+• Task Queue: A message broker (Redis) that holds pending simulation jobs, decoupling the API server from the heavy computation.
+• Compute Worker(s): One or more background processes (Celery) that consume jobs from the queue. These are the only components that run the OpenSim simulation engine.
+• Database: A persistent store (PostgreSQL) for user data and simulation results.
+• Cache: A caching layer (Redis) to store results of previously run simulations, providing instant responses for common queries.
+2. Technology Stack
+• Frontend: React, Tailwind CSS, Three.js (for potential future visualization), Chart.js
+• Backend API: Python, FastAPI
+• Data Validation: Pydantic
+• Simulation Engine: OpenSim Python API
+• Asynchronous Tasks: Celery
+• Message Broker & Cache: Redis
+• Database: SQLite (for local development), PostgreSQL (for production)
+• DevOps: Docker, Docker Compose, GitHub Actions (for CI/CD)
+• Cloud Provider: AWS (or GCP/Azure equivalent)
+3. Development Roadmap
+This project will be developed in three distinct stages, building complexity and robustness at each step.
+Stage 1: Synchronous Localhost (The Prototype)
+Objective: Build a working, end-to-end proof of concept on a single machine to validate the core simulation logic.
+• Architecture: A simple two-tier model: React Frontend <--> FastAPI Server (with OpenSim).
+• Key Tasks:
+1. Setup API Server: Initialize a FastAPI project with an endpoint like /analyze_sync.
+2. Integrate OpenSim: Write the core Python script that takes simulation parameters, runs an OpenSim analysis, and returns the results.
+3. Frontend Communication: Implement a service in React to send a POST request to the API and handle the (long) wait for the synchronous response.
+4. Basic UI: Create a simple form for user inputs and use Chart.js to plot the returned data. The UI should have a prominent loading state.
+5. Configuration: Manage biomechanical parameters in external YAML files.
+6. Validation: Use Pydantic to validate all incoming API requests.
+• Success Criterion: A user can define a lift's parameters in the browser, trigger a simulation, and see the resulting data in a chart.
+Stage 2: Asynchronous Localhost (The MVP)
+Objective: Refactor the prototype into a robust, non-blocking application that can handle long-running tasks gracefully.
+• Architecture: Introduce Celery and Redis to decouple the API from the simulation engine.
+• Key Tasks:
+1. Setup Redis & Celery: Install and configure Redis as the message broker and Celery as the task runner.
+2. Create a Worker: Move the OpenSim simulation logic into a dedicated Celery "task."
+3. Refactor API:
+• Change the /analyze endpoint to create a job, push it to the Celery queue, and immediately return a job_id.
+• Create a /status/<job_id> endpoint for the frontend to poll for completion status.
+• Create a /results/<job_id> endpoint to fetch the final data.
+4. Integrate Database: Set up a local SQLite database to store simulation results. The Celery worker will write to this database upon job completion.
+5. Update Frontend: Modify the React app to follow the new asynchronous flow (submit -> poll -> fetch results).
+6. Containerize: Create Dockerfiles for the React app, API server, and Celery worker, along with a docker-compose.yml to orchestrate them all locally.
+• Success Criterion: The web app remains responsive after a simulation is submitted. Results are stored in a database and can be retrieved once the background job is complete. The entire stack can be launched with docker-compose up.
+Stage 3: Full-Fledged Cloud Deployment (Production)
+Objective: Deploy the application to the cloud, making it scalable, reliable, and publicly accessible.
+• Architecture: A fully managed, scalable cloud infrastructure.
+• Key Tasks:
+1. Setup CI/CD Pipeline: Create GitHub Actions workflows to automatically test and build Docker images for every code push.
+2. Provision Cloud Infrastructure (e.g., AWS):
+• API Server: Deploy the API container to a scalable service like AWS Elastic Beanstalk or AWS Lambda.
+• Compute Workers: Deploy the Celery worker container to dedicated EC2 instances, potentially within an Auto Scaling Group to add more workers based on queue length.
+• Database: Migrate from SQLite to a managed Amazon RDS (PostgreSQL) instance.
+• Broker/Cache: Use Amazon ElastiCache for Redis.
+3. Implement Caching: Before dispatching a new job, the API should create a hash of the simulation parameters and check the Redis cache for an existing result. If found, return the cached data immediately.
+4. Implement Logging & Monitoring: Configure all services to send logs to a centralized service like Amazon CloudWatch. Set up alerts for failed simulations or high queue lengths.
+5. Secure API: Implement authentication and rate limiting for the API endpoints.
+• Success Criterion: The application is live on a public URL, can handle multiple concurrent users, and is monitored for performance and errors. The development-to-deployment process is fully automated.
