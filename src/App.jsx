@@ -46,10 +46,10 @@ const App = () => {
   return (
     <MainLayout>
       <div className="flex flex-1 min-h-0 gap-4">
-        <VintageWindow title="Analysis" className="w-3/5">
+        <VintageWindow title="Analysis" className="w-3/5 flex flex-col min-h-[420px]">
           <ChartCanvas title={`${selectedLift} Analysis`} />
         </VintageWindow>
-        <VintageWindow title="Controls" className="w-2/5 flex flex-col gap-4">
+        <VintageWindow title="Controls" className="w-2/5 flex flex-col gap-4 min-h-[420px]">
           <VintageControlPanel
             lifts={LIFT_OPTIONS}
             selectedLift={selectedLift}
@@ -68,7 +68,7 @@ const App = () => {
           />
         </VintageWindow>
       </div>
-      <VintageWindow title="Coach's Cue" className="h-32 font-mono text-sm">
+      <VintageWindow title="Coach's Cue" className="h-32 font-mono text-sm flex-none">
         <div className="flex items-center h-full">
           <pre className="text-xs leading-none">{pavelContent.ascii_art}</pre>
           <div className="flex-1 pl-4">

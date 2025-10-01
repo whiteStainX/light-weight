@@ -3,9 +3,11 @@ import Stepper from './Stepper';
 import Select from './Select';
 import Knob from './Knob';
 
+import './SetupParameters.css';
+
 const SetupParameters = ({ definitions, values, onParameterChange }) => {
   return (
-    <div className="space-y-2">
+    <div className="parameter-grid">
       {definitions.map(def => {
         if (def.type === 'number') {
           return (
@@ -39,6 +41,7 @@ const SetupParameters = ({ definitions, values, onParameterChange }) => {
               min={def.min}
               max={def.max}
               step={def.step}
+              unit={def.unit}
               onChange={(value) => onParameterChange(def.id, value)}
             />
           );

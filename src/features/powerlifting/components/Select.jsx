@@ -1,13 +1,14 @@
 import React from 'react';
+import './Select.css';
 
 const Select = ({ label, value, options, onChange }) => {
   return (
-    <div className="flex items-center justify-between font-mono text-sm">
-      <label>{label}</label>
+    <label className="panel-select">
+      <span className="panel-select__label">{label}</span>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="bg-white border-2 border-black p-1 w-28 text-right"
+        className="panel-select__field"
       >
         {options.map((option) => (
           <option key={option} value={option}>
@@ -15,7 +16,7 @@ const Select = ({ label, value, options, onChange }) => {
           </option>
         ))}
       </select>
-    </div>
+    </label>
   );
 };
 

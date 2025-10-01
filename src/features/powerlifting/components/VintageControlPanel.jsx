@@ -1,6 +1,7 @@
 import React from 'react';
-import Stepper from './Stepper';
 import SetupParameters from './SetupParameters';
+
+import './VintageControlPanel.css';
 
 const VintageControlPanel = ({
   lifts,
@@ -18,53 +19,59 @@ const VintageControlPanel = ({
 
   return (
     <div className="vintage-control-panel">
-      <div className="panel-group">
-        <h3 className="panel-title">Lift Selection</h3>
-        <div className="grid grid-cols-3 gap-1">
-          {lifts.map(lift => (
+      <div className="vintage-control-panel__scroll">
+        <section className="panel-group">
+          <header className="panel-title">Lift Selection</header>
+          <div className="panel-button-grid">
+            {lifts.map((lift) => (
+              <button
+                key={lift}
+                type="button"
+                onClick={() => onSelectLift(lift)}
+                className={`panel-button ${selectedLift === lift ? 'panel-button--active' : ''}`}
+              >
+                {lift}
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <section className="panel-group">
+          <header className="panel-title">Subject &amp; Load</header>
+          <SetupParameters
+            definitions={sharedDefinitions}
+            values={values.shared} // Pass the correct slice of state
+            onParameterChange={(param, value) => onSetupParameterChange('shared', param, value)}
+          />
+        </section>
+
+        <section className="panel-group">
+          <header className="panel-title">Technique Parameters</header>
+          <SetupParameters
+            definitions={liftSpecificDefinitions}
+            values={values[selectedLift]} // Pass the correct slice of state
+            onParameterChange={(param, value) => onSetupParameterChange(selectedLift, param, value)}
+          />
+          <div className="panel-footer">
             <button
-              key={lift}
-              onClick={() => onSelectLift(lift)}
-              className={`font-mono text-sm border-2 border-black px-2 py-1 ${selectedLift === lift ? 'bg-black text-white' : 'bg-white text-black'}`}>
-              {lift}
+              type="button"
+              onClick={() => onResetSetupParameters(selectedLift)}
+              className="panel-button panel-button--ghost"
+            >
+              Reset to Default
             </button>
-          ))}
-        </div>
-      </div>
+          </div>
+        </section>
 
-      <div className="panel-group">
-        <h3 className="panel-title">Subject & Load</h3>
-        <SetupParameters
-          definitions={sharedDefinitions}
-          values={values.shared} // Pass the correct slice of state
-          onParameterChange={(param, value) => onSetupParameterChange('shared', param, value)}
-        />
-      </div>
-
-      <div className="panel-group">
-        <h3 className="panel-title">Technique Parameters</h3>
-        <SetupParameters
-          definitions={liftSpecificDefinitions}
-          values={values[selectedLift]} // Pass the correct slice of state
-          onParameterChange={(param, value) => onSetupParameterChange(selectedLift, param, value)}
-        />
-        <button onClick={() => onResetSetupParameters(selectedLift)} className="font-mono text-sm text-center w-full mt-2">
-          Reset to Default
-        </button>
-      </div>
-
-      <div className="panel-group">
-        <h3 className="panel-title">Simulation</h3>
-        <div className="flex justify-around">
+        <section className="panel-group">
+          <header className="panel-title">Simulation</header>
           <SetupParameters
             definitions={simulationDefinitions}
             values={values.Simulation} // Pass the correct slice of state
             onParameterChange={(param, value) => onSetupParameterChange('Simulation', param, value)}
           />
-        </div>
+        </section>
       </div>
-
-
     </div>
   );
 };

@@ -1,44 +1,82 @@
 .stepper {
   display: flex;
+  flex-direction: column;
   justify-content: space-between;
-  align-items: center;
-  background-color: #b0b0b0;
-  padding: 2px 4px;
-  border: 1px solid #000;
-  font-family: 'Geneva', sans-serif;
+  gap: 8px;
+  background: linear-gradient(180deg, rgba(252, 252, 252, 0.9), rgba(220, 220, 220, 0.9));
+  padding: 12px 14px;
+  border: 3px solid #101010;
+  border-radius: 14px;
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, 0.7) inset,
+    4px 4px 0 rgba(0, 0, 0, 0.2);
+  min-height: 84px;
+}
+
+.stepper-labels {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
 }
 
 .stepper-label {
-  font-size: 10px;
+  font-size: 11px;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
-  letter-spacing: 0.15em;
+}
+
+.stepper-unit {
+  font-size: 10px;
+  padding: 2px 8px;
+  border: 2px solid #101010;
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(214, 214, 214, 0.9));
 }
 
 .stepper-controls {
-  display: flex;
+  display: grid;
+  grid-template-columns: 34px 1fr 34px;
   align-items: center;
-  gap: 4px;
+  gap: 8px;
 }
 
 .stepper-button {
-  width: 16px;
-  height: 16px;
-  border: 1px solid #000;
-  background-color: #d0d0d0;
+  width: 34px;
+  height: 34px;
+  border: 3px solid #101010;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #fdfdfd 0%, #d8d8d8 100%);
   cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding-bottom: 2px;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, 0.8) inset,
+    3px 3px 0 rgba(0, 0, 0, 0.2);
+}
+
+.stepper-button:hover {
+  transform: translate(-1px, -1px);
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, 0.8) inset,
+    4px 4px 0 rgba(0, 0, 0, 0.24);
 }
 
 .stepper-button:active {
-  background-color: #a0a0a0;
+  transform: translate(1px, 1px);
 }
 
 .stepper-value {
-  font-size: 12px;
+  font-size: 14px;
   font-weight: bold;
-  min-width: 30px;
   text-align: center;
+  padding: 6px 0;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(210, 210, 210, 0.9));
+  border: 2px solid #101010;
+  border-radius: 12px;
+  font-family: 'IBM Plex Mono', 'SFMono-Regular', monospace;
 }
