@@ -1,58 +1,19 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React from 'react';
 import './Knob.css';
 
-const Knob = ({ label, value, onChange, min = 0, max = 100, step = 1 }) => {
-  const knobRef = useRef(null);
-  const [isDragging, setIsDragging] = useState(false);
-
-  const handleMouseDown = (e) => {
-    e.preventDefault();
-    setIsDragging(true);
-  };
-
-  const handleMouseUp = () => {
-    setIsDragging(false);
-  };
-
-  const handleMouseMove = (e) => {
-    if (isDragging) {
-      const rect = knobRef.current.getBoundingClientRect();
-      const centerX = rect.left + rect.width / 2;
-      const centerY = rect.top + rect.height / 2;
-      const angle = Math.atan2(e.clientY - centerY, e.clientX - centerX) * (180 / Math.PI);
-      
-      let normalizedAngle = (angle + 450) % 360;
-      if (normalizedAngle > 315) normalizedAngle = 0;
-      if (normalizedAngle < 225 && normalizedAngle > 180) normalizedAngle = 315;
-
-      const range = max - min;
-      let newValue = min + (normalizedAngle / 315) * range;
-      newValue = Math.round(newValue / step) * step;
-      newValue = Math.max(min, Math.min(max, newValue));
-
-      onChange(newValue);
-    }
-  };
-
-  useEffect(() => {
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseup', handleMouseUp);
-
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [isDragging]);
-
-  const rotation = ((value - min) / (max - min)) * 315;
+const Knob = ({ label, value, onChange, min, max, step }) => {
+  // This is a simplified implementation for visual effect.
+  // A real implementation would use mouse drag events.
+  const percentage = ((value - min) / (max - min)) * 100;
+  const rotation = -135 + (percentage / 100) * 270;
 
   return (
-    <div className="knob-container">
-      <div className="knob-label">{label}</div>
-      <div className="knob" ref={knobRef} onMouseDown={handleMouseDown}>
-        <div className="knob-marker" style={{ transform: `rotate(${rotation}deg)` }}></div>
+    <div className="knob-container font-mono text-sm">
+      <div className="knob">
+        <div className="knob-dial" style={{ transform: `rotate(${rotation}deg)` }}></div>
       </div>
-      <div className="knob-value">{value.toFixed(1)}</div>
+      <label className="knob-label">{label}</label>
+      <div className="knob-value">{value.toFixed(2)}</div>
     </div>
   );
 };

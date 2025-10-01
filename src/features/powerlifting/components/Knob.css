@@ -2,38 +2,38 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  font-family: 'Geneva', sans-serif;
-}
-
-.knob-label {
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.2em;
-  margin-bottom: 4px;
+  width: 80px;
 }
 
 .knob {
-  width: 30px;
-  height: 30px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
-  background-color: #333;
-  border: 2px solid #000;
+  border: 2px solid black;
+  background-color: #c0c0c0; /* Classic gray */
   position: relative;
-  cursor: pointer;
+  box-shadow: inset 2px 2px 0 white, inset -2px -2px 0 #808080;
 }
 
-.knob-marker {
-  width: 2px;
-  height: 8px;
-  background-color: #fff;
+.knob-dial {
   position: absolute;
-  top: 2px;
+  top: 50%;
   left: 50%;
-  transform-origin: bottom center;
-  transform: translateX(-50%);
+  width: 2px;
+  height: 12px;
+  background-color: black;
+  transform-origin: 50% 0%;
+  margin-left: -1px;
+}
+
+.knob-label {
+  margin-top: 4px;
 }
 
 .knob-value {
   font-size: 10px;
-  margin-top: 4px;
+  background-color: white;
+  border: 1px solid black;
+  padding: 0 4px;
+  margin-top: 2px;
 }

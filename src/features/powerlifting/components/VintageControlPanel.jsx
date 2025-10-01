@@ -1,112 +1,70 @@
 import React from 'react';
-import './VintageControlPanel.css';
-import ControlModule from './ControlModule';
 import Stepper from './Stepper';
+import SetupParameters from './SetupParameters';
 
 const VintageControlPanel = ({
   lifts,
   selectedLift,
   onSelectLift,
   definitions,
-  values,
-  defaults,
+  values, // This is now the full nested state object
   onSetupParameterChange,
   onResetSetupParameters,
-  isPlaying,
-  onTogglePlay,
-  tempo,
-  onTempoChange,
-  angles,
-  manualOffsets,
-  onAngleOffsetChange,
-  onResetAngles,
-  barOffset,
-  onBarOffsetChange,
 }) => {
-  const angleEntries = angles ? Object.entries(angles) : [];
+
+  const sharedDefinitions = definitions.shared ?? [];
+  const simulationDefinitions = definitions.Simulation ?? [];
+  const liftSpecificDefinitions = definitions[selectedLift] ?? [];
 
   return (
     <div className="vintage-control-panel">
-      <ControlModule title="Select Lift">
-        <div className="lift-selector">
-          {lifts.map((lift) => (
+      <div className="panel-group">
+        <h3 className="panel-title">Lift Selection</h3>
+        <div className="grid grid-cols-3 gap-1">
+          {lifts.map(lift => (
             <button
               key={lift}
               onClick={() => onSelectLift(lift)}
-              className={`lift-button ${lift === selectedLift ? 'active' : ''}`}>
+              className={`font-mono text-sm border-2 border-black px-2 py-1 ${selectedLift === lift ? 'bg-black text-white' : 'bg-white text-black'}`}>
               {lift}
             </button>
           ))}
         </div>
-      </ControlModule>
+      </div>
 
-      <ControlModule title="Setup Parameters">
-        <div className="grid grid-cols-2 gap-2">
-          {definitions.map(({ key, label, min, max, step }) => (
-            <Stepper
-              key={key}
-              label={label}
-              value={Number(values?.[key] ?? defaults?.[key] ?? min)}
-              onChange={(value) => onSetupParameterChange?.(key, value)}
-              min={min}
-              max={max}
-              step={step}
-            />
-          ))}
-        </div>
-      </ControlModule>
+      <div className="panel-group">
+        <h3 className="panel-title">Subject & Load</h3>
+        <SetupParameters
+          definitions={sharedDefinitions}
+          values={values.shared} // Pass the correct slice of state
+          onParameterChange={(param, value) => onSetupParameterChange('shared', param, value)}
+        />
+      </div>
 
-      <ControlModule title="Playback">
-        <div className="flex items-center gap-4">
-          <button onClick={onTogglePlay} className="playback-button">
-            {isPlaying ? 'Pause' : 'Play'}
-          </button>
-          <div className="flex-1">
-            <label className="block uppercase tracking-widest text-xs mb-1">Tempo</label>
-            <input
-              type="range"
-              min={0.5}
-              max={1.5}
-              step={0.05}
-              value={Number(tempo)}
-              onChange={(event) => onTempoChange(Number(event.target.value))}
-              className="w-full vintage-slider"
-            />
-          </div>
-        </div>
-      </ControlModule>
+      <div className="panel-group">
+        <h3 className="panel-title">Technique Parameters</h3>
+        <SetupParameters
+          definitions={liftSpecificDefinitions}
+          values={values[selectedLift]} // Pass the correct slice of state
+          onParameterChange={(param, value) => onSetupParameterChange(selectedLift, param, value)}
+        />
+        <button onClick={() => onResetSetupParameters(selectedLift)} className="font-mono text-sm text-center w-full mt-2">
+          Reset to Default
+        </button>
+      </div>
 
-      <ControlModule title="Fine Tuning">
-        <div className="grid grid-cols-1 gap-1">
-          {angleEntries.map(([joint]) => (
-            <Stepper
-              key={`tune-${joint}`}
-              label={joint}
-              value={manualOffsets?.[joint] ?? 0}
-              onChange={(value) => onAngleOffsetChange(joint, value)}
-              min={-45}
-              max={45}
-              step={1}
-            />
-          ))}
-          <Stepper
-            label="Bar Horz."
-            value={barOffset?.x ?? 0}
-            onChange={(value) => onBarOffsetChange({ x: value })}
-            min={-60}
-            max={60}
-            step={1}
-          />
-          <Stepper
-            label="Bar Vert."
-            value={barOffset?.y ?? 0}
-            onChange={(value) => onBarOffsetChange({ y: value })}
-            min={-60}
-            max={60}
-            step={1}
+      <div className="panel-group">
+        <h3 className="panel-title">Simulation</h3>
+        <div className="flex justify-around">
+          <SetupParameters
+            definitions={simulationDefinitions}
+            values={values.Simulation} // Pass the correct slice of state
+            onParameterChange={(param, value) => onSetupParameterChange('Simulation', param, value)}
           />
         </div>
-      </ControlModule>
+      </div>
+
+
     </div>
   );
 };

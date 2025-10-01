@@ -1,23 +1,25 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { useLiftAnimation } from './useLiftAnimation';
 import { useKinematics } from './useKinematics';
 import { liftData } from '../lib/liftData.js';
-import { DEFAULT_SETUP_PARAMETERS, createDefaultSetupState } from '../lib/setupParameters';
+import { DEFAULT_SETUP_PARAMETERS } from '../lib/setupParameters';
 
 export const usePowerlifting = () => {
   const LIFT_OPTIONS = Object.keys(liftData);
   const [selectedLift, setSelectedLift] = useState(LIFT_OPTIONS[0]);
 
+  // The state now mirrors the nested structure of the defaults
+  const [setupParameters, setSetupParameters] = useState(DEFAULT_SETUP_PARAMETERS);
+
   const [manualOffsets, setManualOffsets] = useState({});
   const [manualBarOffset, setManualBarOffset] = useState({ x: 0, y: 0 });
-  const [setupParameters, setSetupParameters] = useState(() => createDefaultSetupState(LIFT_OPTIONS));
 
-  useEffect(() => {
-    setManualOffsets({});
-    setManualBarOffset({ x: 0, y: 0 });
-  }, [selectedLift]);
-
-  const activeParameters = setupParameters[selectedLift] ?? DEFAULT_SETUP_PARAMETERS[selectedLift] ?? {};
+  // This combines the shared, simulation, and active lift parameters for the animation
+  const activeParameters = useMemo(() => ({
+    ...setupParameters.shared,
+    ...setupParameters.Simulation,
+    ...(setupParameters[selectedLift] ?? {}),
+  }), [setupParameters, selectedLift]);
 
   const { joints: animatedAngleOffsets, barOffset: animatedBarPosition, isPlaying, togglePlay, tempo, setTempo, progress, phase } =
     useLiftAnimation({ liftType: selectedLift, parameters: activeParameters });
@@ -35,20 +37,22 @@ export const usePowerlifting = () => {
     setManualBarOffset((current) => ({ ...current, ...next }));
   };
 
-  const handleSetupParameterChange = (parameter, value) => {
-    setSetupParameters((current) => ({
+  // This function now correctly updates the nested state
+  const handleSetupParameterChange = (group, parameter, value) => {
+    setSetupParameters(current => ({
       ...current,
-      [selectedLift]: {
-        ...(current[selectedLift] ?? DEFAULT_SETUP_PARAMETERS[selectedLift] ?? {}),
+      [group]: {
+        ...current[group],
         [parameter]: value,
       },
     }));
   };
 
-  const handleResetSetupParameters = () => {
-    setSetupParameters((current) => ({
+  // This function now correctly resets a group
+  const handleResetSetupParameters = (group) => {
+    setSetupParameters(current => ({
       ...current,
-      [selectedLift]: { ...(DEFAULT_SETUP_PARAMETERS[selectedLift] ?? {}) },
+      [group]: DEFAULT_SETUP_PARAMETERS[group],
     }));
   };
 
@@ -64,7 +68,8 @@ export const usePowerlifting = () => {
     LIFT_OPTIONS,
     selectedLift,
     setSelectedLift,
-    activeParameters,
+    setupParameters, // Export the full nested state
+    activeParameters, // Export the combined parameters for the animation
     kinematics,
     animation: {
       isPlaying,
