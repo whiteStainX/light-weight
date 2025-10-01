@@ -1,0 +1,48 @@
+.chart-canvas {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  height: 100%;
+  padding: 8px;
+}
+
+.mini-chart {
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(160deg, #f9f9f9 0%, #e3e3e3 100%);
+  border: 3px solid #101010;
+  border-radius: 16px;
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, 0.7) inset,
+    6px 6px 0 rgba(0, 0, 0, 0.2);
+  padding: 14px;
+  min-height: 220px;
+}
+
+.mini-chart__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.mini-chart__title {
+  font-family: 'Chicago', 'Geneva', sans-serif;
+  font-size: 14px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #202020;
+}
+
+.mini-chart__axis {
+  font-family: 'Geneva', sans-serif;
+  font-size: 11px;
+  padding: 3px 8px;
+  border: 2px solid #101010;
+  border-radius: 10px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(210, 210, 210, 0.9));
+}
+
+.mini-chart .recharts-wrapper {
+  filter: contrast(1.05) saturate(1.05);
+}

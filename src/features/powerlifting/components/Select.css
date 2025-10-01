@@ -1,0 +1,30 @@
+.panel-select {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  border: 3px solid #101010;
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(252, 252, 252, 0.95), rgba(218, 218, 218, 0.95));
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, 0.7) inset,
+    4px 4px 0 rgba(0, 0, 0, 0.2);
+}
+
+.panel-select__label {
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.panel-select__field {
+  width: 100%;
+  border: 3px solid #101010;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #fdfdfd 0%, #dcdcdc 100%);
+  padding: 8px 10px;
+  font-family: 'Geneva', sans-serif;
+  font-size: 12px;
+  text-transform: uppercase;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8) inset;
+}

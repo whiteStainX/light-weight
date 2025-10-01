@@ -1,38 +1,14 @@
 /* vintage-enhancements.css */
 
-/* Classic Macintosh 50% gray dither pattern */
+/* Classic Macintosh inspired dither pattern */
 .bg-mac-dither {
   background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAAXNSR0IArs4c6QAAABNJREFUCFtjZGBgZGBgZgABIg0BABsAAgE19iknAAAAAElFTkSuQmCC');
   background-repeat: repeat;
 }
 
-/* Style for the title bar inspired by System 7 */
-.vintage-window-title-bar {
-  background-color: white;
-  border: 2px solid black;
-  padding: 2px 4px;
-  font-family: "Chicago", monospace; /* Assuming a classic font is available */
-  font-size: 14px;
-  line-height: 1;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  position: relative;
-}
-
-/* The iconic stripes in the title bar */
-.vintage-window-title-bar::before {
-  content: "";
-  position: absolute;
-  left: 6px;
-  top: 6px;
-  bottom: 6px;
-  width: 100px; /* Adjust width as needed */
-  background-image: repeating-linear-gradient(
-    to bottom,
-    #000,
-    #000 1px,
-    transparent 1px,
-    transparent 3px
-  );
+/* Decorative grid background for modules */
+.surface-grid {
+  background-image: linear-gradient(rgba(28, 28, 28, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(28, 28, 28, 0.04) 1px, transparent 1px);
+  background-size: 12px 12px;
 }
