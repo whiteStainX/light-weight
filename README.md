@@ -1,43 +1,39 @@
 # Project Light-Weight
 
-> "I believe that if you're a good programmer, you can write code in any language. But if you're a great programmer, you'll know when not to."
+> "Discipline is the bridge between ambition and victory, comrade."
 
 ## The Spark
 
-This project started from a simple observation: there are a lot of strong people in the gym, but not all of them are lifting with technique that's both effective and safe. Inspired by the raw power of legends like Ronnie Coleman and the scientific principles of Pavel Tsatsouline, I wanted to build a tool that could offer clear, data-driven feedback on weightlifting form.
-
-The initial idea was to create a simple stick-figure animation. However, it quickly became apparent that accurately modeling biomechanics is a complex challenge. The existing tools and libraries for this are powerful but have a steep learning curve. This led to a pivot: instead of getting bogged down in complex animations, the project will focus on what matters most to a serious lifter—data.
-
-This project is now about building a web-based application that provides scientific feedback on powerlifting technique through clear, easy-to-understand charts and data visualizations.
+The idea for **Project Light-Weight** lit up while watching iron legends trade shouts with gravity. Between the power of Ronnie Coleman and the precision of Pavel Tsatsouline, it became clear that lifters deserve data that matches their grit. Rather than chasing flashy stick-figure animations, this mission focuses on measurable insight—charts, signals, and biomechanical feedback that help every comrade lift smarter and stay resilient.
 
 ## The Vision
 
-**Project Light-Weight** aims to be a web-based, data-driven tool for powerlifting analysis. It will allow users to define and adjust lifting parameters to receive an accurate biomechanical analysis, helping them optimize performance and reduce injury risk. The project is currently in its early stages, focusing on building a solid foundation for the user interface and a mocked backend.
+The application aims to deliver web-based, data-driven analysis for the competition lifts. Users define their key parameters, and the system responds with science-backed feedback that improves performance and reduces risk. For now, the focus is on a polished interface and a mocked backend, but the long march leads toward a full production stack.
 
 ## Development Roadmap
 
-The project is being developed in stages, starting with a UI-focused prototype and gradually building towards a full-fledged cloud application.
+The roadmap is organized into four stages so each comrade knows exactly where the campaign stands.
 
-### Stage 0: UI Prototype & Backend Mock (Current Stage)
+### Stage 0: UI Prototype & Backend Mock (Current)
 
--   **Objective:** Build a high-fidelity UI and a placeholder backend to rapidly iterate on the user experience.
--   **Frontend:** A chart-centric UI with a "System 7" aesthetic.
--   **Backend:** A placeholder API (`/api/v1/simulate/placeholder`) that returns hardcoded, correctly formatted JSON data.
+- **Objective:** Deliver a high-fidelity interface and a placeholder backend for rapid iteration.
+- **Frontend:** Chart-first React experience with a System 7 inspired aesthetic.
+- **Backend:** Mocked endpoint at `/api/v1/simulate/placeholder` returning hardcoded JSON that matches the production contract.
 
-### Stage 1: Synchronous Localhost (The Technical Prototype)
+### Stage 1: Synchronous Localhost (Technical Prototype)
 
--   **Objective:** Validate the core simulation logic with a working end-to-end proof of concept.
--   **Architecture:** React Frontend <--> FastAPI Server (with OpenSim).
+- **Objective:** Validate core simulation logic end-to-end on a single machine.
+- **Architecture:** React frontend talking to a FastAPI service powered by OpenSim.
 
-### Stage 2: Asynchronous Localhost (The MVP)
+### Stage 2: Asynchronous Localhost (MVP)
 
--   **Objective:** Refactor the prototype into a robust, non-blocking application.
--   **Architecture:** Introduce Celery and Redis for asynchronous task handling.
+- **Objective:** Keep the interface responsive while long-running simulations execute.
+- **Architecture:** Introduce Celery and Redis so the API can offload heavy work.
 
-### Stage 3: Full-Fledged Cloud Deployment (Production)
+### Stage 3: Full Cloud Deployment (Production)
 
--   **Objective:** Deploy the application to the cloud for public access.
--   **Architecture:** A fully managed, scalable cloud infrastructure.
+- **Objective:** Bring the stack to the cloud for reliable, public access.
+- **Architecture:** Managed services and automation that scale with the squad.
 
 ## System Architecture
 
@@ -70,14 +66,14 @@ The project is being developed in stages, starting with a UI-focused prototype a
 
 ## Technology Stack
 
--   **Frontend:** React, Tailwind CSS, Chart.js
--   **Backend API:** Python, FastAPI, Pydantic
--   **Simulation Engine:** OpenSim Python API
--   **Asynchronous Tasks:** Celery
--   **Message Broker & Cache:** Redis
--   **Database:** SQLite (local), PostgreSQL (production)
--   **DevOps:** Docker, Docker Compose, GitHub Actions
+- **Frontend:** React, Tailwind CSS, Chart.js
+- **Backend API:** Python, FastAPI, Pydantic
+- **Simulation Engine:** OpenSim Python API
+- **Asynchronous Tasks:** Celery
+- **Message Broker & Cache:** Redis
+- **Database:** SQLite for local work, PostgreSQL in production
+- **DevOps:** Docker, Docker Compose, GitHub Actions
 
 ## A Note on the Journey
 
-This project is as much about the process as it is about the final product. It's an exploration of how to build a complex application from the ground up, learning and adapting along the way. The journey is documented in the `diary.md` file, which offers a more personal, human-oriented perspective on the project's development.
+This effort is about forging strength together. Every iteration sharpens the tools, every chart tells a story, and every comrade benefits from the shared discipline. The evolving narrative lives in `diary.md`, where decisions, pivots, and reflections are recorded for any teammate or model to study. Light weight, comrade!
