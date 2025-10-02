@@ -6,16 +6,25 @@ const Typewriter = ({ text, speed = 50 }) => {
 
   useEffect(() => {
     setDisplayedText('');
-    let i = 0;
-    const intervalId = setInterval(() => {
-      setDisplayedText((prev) => prev + text.charAt(i));
-      i++;
-      if (i > text.length) {
-        clearInterval(intervalId);
-      }
-    }, speed);
 
-    return () => clearInterval(intervalId);
+    if (!text) return;
+
+    let i = 0;
+    let timeoutId;
+
+    const type = () => {
+      if (i < text.length) {
+        setDisplayedText((prev) => prev + text.charAt(i));
+        i++;
+        timeoutId = setTimeout(type, speed);
+      }
+    };
+
+    // Start the typing
+    timeoutId = setTimeout(type, speed);
+
+    // Cleanup function to clear the timeout when the component unmounts or the text changes
+    return () => clearTimeout(timeoutId);
   }, [text, speed]);
 
   return <span className="typewriter">{displayedText}</span>;
