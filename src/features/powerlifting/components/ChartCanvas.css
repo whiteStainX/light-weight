@@ -46,3 +46,14 @@
 .mini-chart .recharts-wrapper {
   filter: contrast(1.05) saturate(1.05);
 }
+
+.chart-canvas__loading {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'IBM Plex Mono', 'SFMono-Regular', monospace;
+  font-size: clamp(0.9rem, 2vw, 1.05rem);
+  color: #202020;
+}

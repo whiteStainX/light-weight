@@ -7,6 +7,7 @@ import ChartCanvas from './features/powerlifting/components/ChartCanvas';
 import VintageControlPanel from './features/powerlifting/components/VintageControlPanel';
 import { usePowerlifting } from './features/powerlifting/hooks/usePowerlifting';
 import { PARAMETER_DEFINITIONS, DEFAULT_SETUP_PARAMETERS } from './features/powerlifting/lib/setupParameters';
+import './App.css';
 
 const App = () => {
   const [pavelContent, setPavelContent] = useState({ quotes: [], ascii_art: '' });
@@ -42,40 +43,47 @@ const App = () => {
     return quotePool[Math.floor(Math.random() * quotePool.length)];
   }, [selectedLift, pavelContent.quotes]);
 
+  const asciiArt = pavelContent.ascii_art && pavelContent.ascii_art.trim().length > 0
+    ? pavelContent.ascii_art
+    : ` (•_•)
+<)   )╯
+ /   \\`;
 
   return (
     <MainLayout>
-      <div className="flex flex-1 min-h-0 gap-4">
-        <VintageWindow title="Analysis" className="w-3/5 flex flex-col min-h-[420px]">
-          <ChartCanvas title={`${selectedLift} Analysis`} />
-        </VintageWindow>
-        <VintageWindow title="Controls" className="w-2/5 flex flex-col gap-4 min-h-[420px]">
-          <VintageControlPanel
-            lifts={LIFT_OPTIONS}
-            selectedLift={selectedLift}
-            onSelectLift={setSelectedLift}
-            definitions={PARAMETER_DEFINITIONS} // Pass the whole object
-            values={setupParameters} // Pass the whole nested object
-            defaults={DEFAULT_SETUP_PARAMETERS}
-            onSetupParameterChange={controls.handleSetupParameterChange}
-            onResetSetupParameters={controls.handleResetSetupParameters}
-            angles={kinematics.angles}
-            manualOffsets={controls.manualOffsets}
-            onAngleOffsetChange={controls.handleAngleOffsetChange}
-            onResetAngles={controls.handleResetAdjustments}
-            barOffset={controls.manualBarOffset}
-            onBarOffsetChange={controls.handleBarOffsetChange}
-          />
-        </VintageWindow>
-      </div>
-      <VintageWindow title="Coach's Cue" className="h-32 font-mono text-sm flex-none">
-        <div className="flex items-center h-full">
-          <pre className="text-xs leading-none">{pavelContent.ascii_art}</pre>
-          <div className="flex-1 pl-4">
-            <Typewriter text={cue} />
-          </div>
+      <section className="app-layout">
+        <div className="app-layout__primary">
+          <VintageWindow title="Analysis" className="app-layout__window app-layout__window--analysis">
+            <ChartCanvas title={`${selectedLift} Analysis`} />
+          </VintageWindow>
+          <VintageWindow title="Controls" className="app-layout__window app-layout__window--controls">
+            <VintageControlPanel
+              lifts={LIFT_OPTIONS}
+              selectedLift={selectedLift}
+              onSelectLift={setSelectedLift}
+              definitions={PARAMETER_DEFINITIONS} // Pass the whole object
+              values={setupParameters} // Pass the whole nested object
+              defaults={DEFAULT_SETUP_PARAMETERS}
+              onSetupParameterChange={controls.handleSetupParameterChange}
+              onResetSetupParameters={controls.handleResetSetupParameters}
+              angles={kinematics.angles}
+              manualOffsets={controls.manualOffsets}
+              onAngleOffsetChange={controls.handleAngleOffsetChange}
+              onResetAngles={controls.handleResetAdjustments}
+              barOffset={controls.manualBarOffset}
+              onBarOffsetChange={controls.handleBarOffsetChange}
+            />
+          </VintageWindow>
         </div>
-      </VintageWindow>
+        <VintageWindow title="Coach's Cue" className="app-layout__window app-layout__window--coach">
+          <div className="coach-cue">
+            <pre className="coach-cue__ascii">{asciiArt}</pre>
+            <div className="coach-cue__message">
+              <Typewriter text={cue} />
+            </div>
+          </div>
+        </VintageWindow>
+      </section>
     </MainLayout>
   );
 };

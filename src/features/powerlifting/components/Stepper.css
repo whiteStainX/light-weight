@@ -1,16 +1,13 @@
 .stepper {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  gap: 8px;
-  background: linear-gradient(180deg, rgba(252, 252, 252, 0.9), rgba(220, 220, 220, 0.9));
-  padding: 12px 14px;
-  border: 3px solid #101010;
-  border-radius: 14px;
-  box-shadow:
-    0 0 0 2px rgba(255, 255, 255, 0.7) inset,
-    4px 4px 0 rgba(0, 0, 0, 0.2);
-  min-height: 84px;
+  gap: 12px;
+  background: var(--neo-surface);
+  padding: 16px 18px;
+  border: 3px solid var(--neo-border);
+  border-radius: 22px;
+  box-shadow: 6px 6px 0 var(--neo-border);
+  min-height: 94px;
 }
 
 .stepper-labels {
@@ -21,62 +18,82 @@
 }
 
 .stepper-label {
-  font-size: 11px;
+  font-size: 0.75rem;
   letter-spacing: 0.18em;
   text-transform: uppercase;
+  font-weight: 700;
 }
 
 .stepper-unit {
-  font-size: 10px;
-  padding: 2px 8px;
-  border: 2px solid #101010;
-  border-radius: 12px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(214, 214, 214, 0.9));
+  font-size: 0.65rem;
+  padding: 0.25em 0.75em;
+  border: 2px solid var(--neo-border);
+  border-radius: 999px;
+  background: var(--neo-accent-2);
+  font-weight: 700;
 }
 
 .stepper-controls {
   display: grid;
-  grid-template-columns: 34px 1fr 34px;
+  grid-template-columns: 42px 1fr 42px;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
 }
 
 .stepper-button {
-  width: 34px;
-  height: 34px;
-  border: 3px solid #101010;
-  border-radius: 12px;
-  background: linear-gradient(180deg, #fdfdfd 0%, #d8d8d8 100%);
+  width: 42px;
+  height: 42px;
+  border: 3px solid var(--neo-border);
+  border-radius: 16px;
+  background: var(--neo-accent);
   cursor: pointer;
-  font-size: 18px;
+  font-size: 22px;
   line-height: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform 120ms ease, box-shadow 120ms ease;
-  box-shadow:
-    0 0 0 2px rgba(255, 255, 255, 0.8) inset,
-    3px 3px 0 rgba(0, 0, 0, 0.2);
+  transition: transform 150ms ease, box-shadow 150ms ease, background-color 150ms ease;
+  box-shadow: 6px 6px 0 var(--neo-border);
+  color: var(--neo-border);
 }
 
 .stepper-button:hover {
-  transform: translate(-1px, -1px);
-  box-shadow:
-    0 0 0 2px rgba(255, 255, 255, 0.8) inset,
-    4px 4px 0 rgba(0, 0, 0, 0.24);
+  transform: translate(-2px, -2px);
+  box-shadow: 8px 8px 0 var(--neo-border);
 }
 
 .stepper-button:active {
   transform: translate(1px, 1px);
+  box-shadow: 4px 4px 0 var(--neo-border);
 }
 
 .stepper-value {
-  font-size: 14px;
-  font-weight: bold;
+  font-size: 1rem;
+  font-weight: 800;
   text-align: center;
-  padding: 6px 0;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(210, 210, 210, 0.9));
-  border: 2px solid #101010;
-  border-radius: 12px;
+  padding: 0.55em 0;
+  background: var(--neo-surface-alt);
+  border: 3px solid var(--neo-border);
+  border-radius: 18px;
   font-family: 'IBM Plex Mono', 'SFMono-Regular', monospace;
+  box-shadow: 6px 6px 0 var(--neo-border);
+}
+
+@media (max-width: 720px) {
+  .stepper {
+    padding: 14px 16px;
+  }
+
+  .stepper-controls {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .stepper-button {
+    width: 100%;
+  }
+
+  .stepper-value {
+    font-size: 0.95rem;
+  }
 }

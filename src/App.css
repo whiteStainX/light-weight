@@ -1,0 +1,128 @@
+.app-layout {
+  width: min(1400px, 100%);
+  margin-inline: auto;
+  display: grid;
+  gap: clamp(1.75rem, 3vw, 2.5rem);
+}
+
+.app-layout__primary {
+  display: grid;
+  grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+  gap: clamp(1.5rem, 3vw, 2.5rem);
+  align-items: stretch;
+  min-height: 0;
+}
+
+.app-layout__window {
+  width: 100%;
+  min-height: clamp(340px, 42vw, 540px);
+}
+
+.app-layout__window--analysis .vintage-window-content,
+.app-layout__window--controls .vintage-window-content {
+  padding: clamp(1.25rem, 2vw, 1.85rem);
+}
+
+.app-layout__window--coach {
+  min-height: clamp(180px, 26vh, 240px);
+}
+
+.coach-cue {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: clamp(0.75rem, 2.5vw, 1.5rem);
+  height: 100%;
+}
+
+.coach-cue__ascii {
+  margin: 0;
+  padding: 0.65rem 0.9rem;
+  font-family: 'IBM Plex Mono', 'SFMono-Regular', monospace;
+  font-size: clamp(0.48rem, 1.7vw, 0.72rem);
+  line-height: 1.1;
+  white-space: pre;
+  border: 3px solid var(--neo-border);
+  border-radius: 20px;
+  background: var(--neo-surface-alt);
+  box-shadow: 6px 6px 0 var(--neo-border);
+  max-width: min(240px, 42vw);
+  overflow-x: auto;
+}
+
+.coach-cue__message {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.coach-cue__message .typewriter {
+  font-size: clamp(0.95rem, 2.5vw, 1.2rem);
+  line-height: 1.35;
+}
+
+@media (max-width: 1200px) {
+  .app-layout__primary {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  }
+}
+
+@media (max-width: 1024px) {
+  .app-layout__window {
+    min-height: clamp(320px, 55vh, 500px);
+  }
+}
+
+@media (max-width: 900px) {
+  .app-layout__primary {
+    grid-template-columns: 1fr;
+  }
+
+  .app-layout__window {
+    min-height: auto;
+  }
+
+  .app-layout__window--controls {
+    order: 2;
+  }
+
+  .app-layout__window--analysis {
+    order: 1;
+  }
+}
+
+@media (max-width: 720px) {
+  .app-layout {
+    gap: 1.5rem;
+  }
+
+  .app-layout__window--coach {
+    min-height: auto;
+  }
+
+  .coach-cue {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    text-align: center;
+    gap: 1rem;
+  }
+
+  .coach-cue__ascii {
+    max-width: 100%;
+  }
+
+  .coach-cue__message {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 520px) {
+  .coach-cue__ascii {
+    font-size: clamp(0.55rem, 4vw, 0.68rem);
+    padding: 0.55rem 0.8rem;
+  }
+
+  .coach-cue__message .typewriter {
+    font-size: clamp(0.9rem, 4vw, 1.05rem);
+  }
+}
