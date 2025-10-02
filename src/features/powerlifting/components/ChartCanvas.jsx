@@ -132,7 +132,11 @@ const ChartCanvas = ({ title }) => {
   }, []);
 
   if (loading) {
-    return <div className="w-full h-full flex items-center justify-center font-mono">Loading Simulation Data...</div>;
+    return (
+      <div className="chart-canvas__loading" aria-live="polite">
+        Loading Simulation Data...
+      </div>
+    );
   }
 
   return (
