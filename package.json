@@ -4,6 +4,8 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "start": "node scripts/start.js",
+    "fetch:coe": "node scripts/fetch-coe-data.js",
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
